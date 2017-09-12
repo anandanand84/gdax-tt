@@ -1,3 +1,4 @@
+import { ProductMap } from '../ProductMap';
 /***************************************************************************************************************************
  * @license                                                                                                                *
  * Copyright 2017 Coinbase, Inc.                                                                                           *
@@ -92,6 +93,11 @@ export class GDAXFeed extends ExchangeFeed {
 
     get owner(): string {
         return 'GDAX';
+    }
+
+    private mapProduct(id: string): string {
+        if(!id) return "";
+        return ProductMap.ExchangeMap.get('GDAX').getGenericProduct(id);
     }
 
     /**
@@ -232,7 +238,7 @@ export class GDAXFeed extends ExchangeFeed {
      * Marked for deprecation
      */
     private pushMessage(message: StreamMessage): void {
-        const product: string = (message as any).productId;
+        const product: string = ((message as any).productId);
         const needsQueue = (message as any).sequence && this.queueing[product];
         // If we're waiting for a snapshot, and the message needs one (i.e. has a sequence  number) queue it up, else send it straight on
         if (!product || !needsQueue) {
@@ -243,7 +249,7 @@ export class GDAXFeed extends ExchangeFeed {
     }
 
     private createSnapshotMessage(snapshot: GDAXSnapshotMessage): SnapshotMessage {
-        const product: string = snapshot.product_id;
+        const product: string = this.mapProduct(snapshot.product_id);
         const orders: OrderPool = {};
         const snapshotMessage: SnapshotMessage = {
             type: 'snapshot',
@@ -279,7 +285,7 @@ export class GDAXFeed extends ExchangeFeed {
     }
 
     private processUpdate(update: GDAXL2UpdateMessage) {
-        const product: string = update.product_id;
+        const product: string = this.mapProduct(update.product_id);
         update.changes.forEach(([side, price, newSize]) => {
             this.internalSequence[product] = this.getSequence(product) + 1;
             const message: LevelMessage = {
@@ -289,7 +295,7 @@ export class GDAXFeed extends ExchangeFeed {
                 size: newSize,
                 count: 1,
                 sequence: this.getSequence(product),
-                productId: update.product_id,
+                productId: this.mapProduct(update.product_id),
                 side: side
             };
             this.pushMessage(message);
@@ -300,7 +306,7 @@ export class GDAXFeed extends ExchangeFeed {
         return {
             type: 'ticker',
             time: new Date(ticker.time),
-            productId: ticker.product_id,
+            productId: this.mapProduct(ticker.product_id),
             sequence: ticker.sequence,
             price: Big(ticker.price),
             bid: Big(ticker.best_bid),
@@ -334,7 +340,7 @@ export class GDAXFeed extends ExchangeFeed {
                     type: 'newOrder',
                     time: new Date((feedMessage as GDAXOpenMessage).time),
                     sequence: (feedMessage as GDAXOpenMessage).sequence,
-                    productId: (feedMessage as GDAXOpenMessage).product_id,
+                    productId: this.mapProduct((feedMessage as GDAXOpenMessage).product_id),
                     orderId: (feedMessage as GDAXOpenMessage).order_id,
                     side: (feedMessage as GDAXOpenMessage).side,
                     price: (feedMessage as GDAXOpenMessage).price,
@@ -351,7 +357,7 @@ export class GDAXFeed extends ExchangeFeed {
                     type: 'orderDone',
                     time: new Date((feedMessage as GDAXDoneMessage).time),
                     sequence: (feedMessage as GDAXDoneMessage).sequence,
-                    productId: (feedMessage as GDAXDoneMessage).product_id,
+                    productId: this.mapProduct((feedMessage as GDAXDoneMessage).product_id),
                     orderId: (feedMessage as GDAXDoneMessage).order_id,
                     remainingSize: size,
                     price: (feedMessage as GDAXDoneMessage).price,
@@ -369,18 +375,20 @@ export class GDAXFeed extends ExchangeFeed {
                     type: 'changedOrder',
                     time: new Date(change.time),
                     sequence: change.sequence,
-                    productId: change.product_id,
+                    productId: this.mapProduct(change.product_id),
                     orderId: change.order_id,
                     side: change.side,
                     price: change.price,
                     newSize: change.new_size
                 } as ChangedOrderMessage;
             default:
+            console.dir("Unknown message for product id ", feedMessage.product_id)
+            console.log(feedMessage)
                 return {
                     type: 'unknown',
                     time: new Date(),
                     sequence: (feedMessage as any).sequence,
-                    productId: feedMessage.product_id,
+                    productId: this.mapProduct(feedMessage.product_id),
                     message: feedMessage
                 } as UnknownMessage;
         }
@@ -391,7 +399,7 @@ export class GDAXFeed extends ExchangeFeed {
         const trade: TradeMessage = {
             type: 'trade',
             time: new Date(msg.time),
-            productId: msg.product_id,
+            productId: this.mapProduct(msg.product_id),
             tradeId: msg.trade_id,
             side: takerSide,
             price: msg.price,
@@ -418,7 +426,7 @@ export class GDAXFeed extends ExchangeFeed {
                 return {
                     type: 'tradeExecuted',
                     time: time,
-                    productId: (feedMessage as GDAXMatchMessage).product_id,
+                    productId: this.mapProduct((feedMessage as GDAXMatchMessage).product_id),
                     orderId: isTaker ? (feedMessage as GDAXMatchMessage).taker_order_id : (feedMessage as GDAXMatchMessage).maker_order_id,
                     orderType: isTaker ? 'market' : 'limit',
                     side: side,
@@ -429,7 +437,7 @@ export class GDAXFeed extends ExchangeFeed {
                 return {
                     type: 'tradeFinalized',
                     time: time,
-                    productId: (feedMessage as GDAXDoneMessage).product_id,
+                    productId: this.mapProduct((feedMessage as GDAXDoneMessage).product_id),
                     orderId: (feedMessage as GDAXDoneMessage).order_id,
                     reason: (feedMessage as GDAXDoneMessage).reason,
                     side: (feedMessage as GDAXDoneMessage).side,
@@ -440,7 +448,7 @@ export class GDAXFeed extends ExchangeFeed {
                 return {
                     type: 'myOrderPlaced',
                     time: time,
-                    productId: (feedMessage as GDAXOpenMessage).product_id,
+                    productId: this.mapProduct((feedMessage as GDAXOpenMessage).product_id),
                     orderId: (feedMessage as GDAXOpenMessage).order_id,
                     side: (feedMessage as GDAXOpenMessage).side,
                     price: (feedMessage as GDAXOpenMessage).price,

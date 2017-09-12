@@ -1,3 +1,4 @@
+import { ProductMap } from '../ProductMap';
 /***************************************************************************************************************************
  * @license                                                                                                                *
  * Copyright 2017 Coinbase, Inc.                                                                                           *
@@ -20,7 +21,7 @@ import {
     BitfinexTradeSnapshot,
     BitfinexTradeMessage
 } from './BitfinexMessages';
-import { WEBSOCKET_API_VERSION, ORDERBOOK_PRECISION, REVERSE_PRODUCT_MAP } from './BitfinexCommon';
+import { WEBSOCKET_API_VERSION, ORDERBOOK_PRECISION } from './BitfinexCommon';
 import { LevelMessage, SnapshotMessage, TickerMessage, TradeMessage } from '../../core/Messages';
 import { Level3Order, PriceLevelWithOrders } from '../../lib/Orderbook';
 import { Big } from '../../lib/types';
@@ -130,7 +131,8 @@ export class BitfinexFeed extends ExchangeFeed {
                 break;
         }
         this.send(subscribeMessage, (err: Error) => {
-            this.log('error', `Error subscribing to Bitfinex channel ${channelType} ${product}`, err);
+            if(err)
+                this.log('error', `Error subscribing to Bitfinex channel ${channelType} ${product}`, err);
         });
     }
 
@@ -349,7 +351,7 @@ export class BitfinexFeed extends ExchangeFeed {
     }
 
     private mapProduct(id: string): string {
-        return REVERSE_PRODUCT_MAP[id.toLowerCase()] || id;
+        return ProductMap.ExchangeMap.get('Bitfinex').getGenericProduct(id);
     }
 
     private mapTicker(bt: BitfinexTickerMessage): TickerMessage {

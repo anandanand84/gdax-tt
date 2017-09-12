@@ -21,6 +21,7 @@ import { GDAXL2UpdateMessage, GDAXMatchMessage, GDAXMessage, GDAXSnapshotMessage
 import { OrderbookState } from '../../src/lib/Orderbook';
 import { BookBuilder } from '../../src/lib/BookBuilder';
 import { hooks } from '../../src/exchanges/ExchangeFeed';
+import { prepareProductMap } from '../../test/helper';
 import simple = require('simple-mock');
 
 const assert = require('assert');
@@ -34,6 +35,9 @@ mockSocket.close = () => {
 };
 
 describe('GDAX Message feed', () => {
+    before(async () => {
+        return prepareProductMap();
+    })
     const messages: GDAXMessage[] = [
         {
             type: 'l2update',
@@ -245,7 +249,7 @@ describe('GDAX Message feed', () => {
         book = new LiveOrderbook({
             logger: NullLogger,
             strictMode: true,
-            product: 'BTC-USD'
+            product: 'BTC/USD'
         });
         gdaxFeed.pipe(book);
     });
@@ -413,7 +417,7 @@ describe('GDAX feed with channels', () => {
         book = new LiveOrderbook({
             logger: NullLogger,
             strictMode: true,
-            product: 'BTC-EUR'
+            product: 'BTC/EUR'
         });
         gdaxFeed.pipe(book);
     });

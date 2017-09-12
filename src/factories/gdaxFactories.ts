@@ -1,3 +1,4 @@
+import { ProductMap } from '../exchanges/ProductMap';
 /***************************************************************************************************************************
  * @license                                                                                                                *
  * Copyright 2017 Coinbase, Inc.                                                                                           *
@@ -37,6 +38,10 @@ export function DefaultAPI(logger: Logger): GDAXExchangeAPI {
         });
     }
     return publicAPIInstance;
+}
+
+function getExchangeProduct(genericProduct:string):string {
+    return ProductMap.ExchangeMap.get('GDAX').getExchangeProduct(genericProduct);
 }
 
 /**
@@ -95,6 +100,9 @@ export function FeedFactory(logger: Logger, productIDs?: string[], auth?: GDAXAu
     // Use the GAX API to get, and subscribe to all the endpoints
     let productPromise: Promise<string[]>;
     if (productIDs) {
+        productIDs = productIDs.map((genericProduct: string) => {
+            return getExchangeProduct(genericProduct) || genericProduct;
+        });
         productPromise = Promise.resolve(productIDs);
     } else {
         productPromise = DefaultAPI(logger)

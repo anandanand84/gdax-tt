@@ -111,11 +111,12 @@ export abstract class ExchangeFeed extends Readable {
     }
 
     protected onError(err: Error) {
-        this._logger.log(
-            'error',
-            `The websocket feed to ${this.url} ${this.auth ? '(authenticated)' : ''} has reported an error. If necessary, we will reconnect.`,
-            { error: err }
-        );
+        if(err)
+            this._logger.log(
+                'error',
+                `The websocket feed to ${this.url} ${this.auth ? '(authenticated)' : ''} has reported an error. If necessary, we will reconnect.`,
+                { error: err }
+            );
         if (!this.socket || this.socket.readyState !== 1) {
             this.reconnect(15000);
         } else {

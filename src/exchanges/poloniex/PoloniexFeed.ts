@@ -71,7 +71,7 @@ export class PoloniexFeed extends ExchangeFeed {
     }
 
     getSubscriptions(): ChannelSubscription[] {
-        return Object.values(this.subscriptions);
+        return <ChannelSubscription[]>Object.values(this.subscriptions);
     }
 
     protected get owner(): string {

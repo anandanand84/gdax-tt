@@ -16,7 +16,8 @@ import { BitfinexExchangeAPI } from '../exchanges/bitfinex/BitfinexExchangeAPI';
 import { Logger } from '../utils/Logger';
 import { BitfinexFeed, BitfinexFeedConfig } from '../exchanges/bitfinex/BitfinexFeed';
 import { ExchangeAuthConfig } from '../exchanges/AuthConfig';
-import { BITFINEX_WS_FEED, PRODUCT_MAP } from '../exchanges/bitfinex/BitfinexCommon';
+import { BITFINEX_WS_FEED } from '../exchanges/bitfinex/BitfinexCommon';
+import { ProductMap } from '../exchanges/ProductMap'
 import { Product } from '../exchanges/PublicExchangeAPI';
 import { getFeed } from '../exchanges/ExchangeFeed';
 
@@ -36,8 +37,14 @@ export function DefaultAPI(logger: Logger): BitfinexExchangeAPI {
             }
         });
     }
+    
     return publicAPIInstance;
 }
+
+function getExchangeProduct(genericProduct:string):string {
+    return ProductMap.ExchangeMap.get('Bitfinex').getExchangeProduct(genericProduct);
+}
+
 
 /**
  * Convenience function to connect to and subscribe to the given channels
@@ -57,8 +64,8 @@ export function getSubscribedFeeds(wsUrl: string, products: string[], auth?: Exc
         };
         const feed = getFeed<BitfinexFeed, BitfinexFeedConfig>(BitfinexFeed, config);
         feed.once('websocket-open', () => {
-            products.forEach((gdaxProduct: string) => {
-                const product = PRODUCT_MAP[gdaxProduct] || gdaxProduct;
+            products.forEach((product: string) => {
+                console.log('Subscribing Products, Exchange Product', product);
                 feed.subscribe('ticker', product);
                 feed.subscribe('trades', product);
                 feed.subscribe('book', product);
@@ -82,6 +89,10 @@ export function FeedFactory(logger: Logger, productIDs?: string[]): Promise<Bitf
     // Use the Bitfinex API to get, and subscribe to all the endpoints
     let productPromise: Promise<string[]>;
     if (productIDs) {
+        console.log('Subscribing Products, Generic Product', productIDs);
+        productIDs = productIDs.map((genericProduct: string) => {
+            return getExchangeProduct(genericProduct) || genericProduct;
+        });
         productPromise = Promise.resolve(productIDs);
     } else {
         productPromise = DefaultAPI(logger)

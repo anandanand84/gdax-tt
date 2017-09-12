@@ -20,27 +20,3 @@ export const ORDERBOOK_PRECISION: { [index: string]: string } = {
 
 export const WEBSOCKET_API_VERSION = 1.1;
 export const BITFINEX_WS_FEED = 'wss://api2.bitfinex.com:3000/ws';
-
-/**
- * A map of supported GDAX books to the equivalent Bitfinex book
- */
-export const PRODUCT_MAP: { [index: string]: string } = {
-    'BTC-USD': 'btcusd',
-    'LTC-USD': 'ltcusd',
-    'LTC-BTC': 'ltcbtc',
-    'ETH-USD': 'ethusd',
-    'ETH-BTC': 'ethbtc'
-};
-export const REVERSE_PRODUCT_MAP: { [index: string]: string } = {
-    btcusd: 'BTC-USD',
-    ltcusd: 'LTC-USD',
-    ltcbtc: 'LTC-BTC',
-    ethusd: 'ETH-USD',
-    ethbtc: 'ETH-BTC'
-};
-export const REVERSE_CURRENCY_MAP: { [index: string]: string } = {
-    btc: 'BTC',
-    ltc: 'LTC',
-    eth: 'ETH',
-    usd: 'USD'
-};

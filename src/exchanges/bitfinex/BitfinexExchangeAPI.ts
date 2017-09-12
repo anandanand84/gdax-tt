@@ -20,7 +20,8 @@ import {
     BitfinexBalance, BitfinexOrderRequest, BitfinexOrderType, BitfinexResult, BitfinexSuccessfulOrderExecution, BitfinexTransferRequest, BitfinexWallet, isBFWallet
 } from './BitfinexAuth';
 import { Logger } from '../../utils/Logger';
-import { PRODUCT_MAP, REVERSE_CURRENCY_MAP, REVERSE_PRODUCT_MAP } from './BitfinexCommon';
+// import { PRODUCT_MAP, REVERSE_CURRENCY_MAP, REVERSE_PRODUCT_MAP } from './BitfinexCommon';
+import { ProductMap } from '../ProductMap';
 import { CryptoAddress, ExchangeTransferAPI, TransferRequest, TransferResult, WithdrawalRequest } from '../ExchangeTransferAPI';
 import { ExchangeAuthConfig } from '../AuthConfig';
 import { Big, BigJS } from '../../lib/types';
@@ -68,20 +69,32 @@ export interface BitfinexProduct {
  */
 export class BitfinexExchangeAPI implements PublicExchangeAPI, AuthenticatedExchangeAPI, ExchangeTransferAPI {
     /**
-     * Returns the Bitfinex product that's equivalent to the given GDAX product. If it doesn't exist,
+     * Returns the Bitfinex product that's equivalent to the given Generic product. If it doesn't exist,
      * return the given product
-     * @param gdaxProduct
+     * @param genericProduct
      * @returns {string} Bitfinex product code
      */
-    static product(gdaxProduct: string) {
-        return PRODUCT_MAP[gdaxProduct] || gdaxProduct;
+    static product(genericProduct: string) {
+        return ProductMap.ExchangeMap.get('Bitfinex').getExchangeProduct(genericProduct) || genericProduct;
+    }
+
+    static genericProduct(exchangeProduct: string) {
+        return ProductMap.ExchangeMap.get('Bitfinex').getGenericProduct(exchangeProduct) || exchangeProduct;
+    }
+
+    static getMarket(genericProduct: string) {
+        return ProductMap.ExchangeMap.get('Bitfinex').getMarket(genericProduct);
+    }
+    
+    static getMarketForExchangeProduct(exchangeProduct: string) {
+        return ProductMap.ExchangeMap.get('Bitfinex').getMarket(BitfinexExchangeAPI.genericProduct(exchangeProduct));
     }
 
     static convertBSOPToOrder(bfOrder: BitfinexSuccessfulOrderExecution): LiveOrder {
         return {
             time: new Date(+bfOrder.timestamp * 1000),
             id: bfOrder.id.toString(),
-            productId: REVERSE_PRODUCT_MAP[bfOrder.symbol],
+            productId: BitfinexExchangeAPI.genericProduct(bfOrder.symbol),
             size: Big(bfOrder.executed_amount),
             price: Big(bfOrder.price),
             side: bfOrder.side,
@@ -116,10 +129,11 @@ export class BitfinexExchangeAPI implements PublicExchangeAPI, AuthenticatedExch
                 const products: Product[] = bfProducts.map((prod: BitfinexProduct) => {
                     const base = prod.pair.slice(0, 3);
                     const quote = prod.pair.slice(3, 6);
+                    let ccxtMarket = BitfinexExchangeAPI.getMarketForExchangeProduct(prod.pair);
                     return {
-                        id: REVERSE_PRODUCT_MAP[prod.pair] || prod.pair,
-                        baseCurrency: REVERSE_CURRENCY_MAP[base] || base,
-                        quoteCurrency: REVERSE_CURRENCY_MAP[quote] || quote,
+                        id: BitfinexExchangeAPI.genericProduct(prod.pair) || prod.pair,
+                        baseCurrency: ccxtMarket.base || base,
+                        quoteCurrency: ccxtMarket.quote || quote,
                         baseMinSize: Big(prod.minimum_order_size),
                         baseMaxSize: Big(prod.maximum_order_size),
                         quoteIncrement: Big(prod.minimum_order_size)
@@ -129,14 +143,14 @@ export class BitfinexExchangeAPI implements PublicExchangeAPI, AuthenticatedExch
             });
     }
 
-    loadMidMarketPrice(gdaxProduct: string): Promise<BigJS> {
-        return this.loadTicker(gdaxProduct).then((ticker: Ticker) => {
+    loadMidMarketPrice(genericProduct: string): Promise<BigJS> {
+        return this.loadTicker(genericProduct).then((ticker: Ticker) => {
             return ticker.bid.plus(ticker.ask).times(0.5);
         });
     }
 
-    loadOrderbook(gdaxProduct: string): Promise<BookBuilder> {
-        const product = BitfinexExchangeAPI.product(gdaxProduct);
+    loadOrderbook(genericProduct: string): Promise<BookBuilder> {
+        const product = BitfinexExchangeAPI.product(genericProduct);
         return request.get(`${API_V1}/book/${product}`)
             .query({ grouped: 1 })
             .accept('application/json')
@@ -148,8 +162,8 @@ export class BitfinexExchangeAPI implements PublicExchangeAPI, AuthenticatedExch
             });
     }
 
-    loadTicker(gdaxProduct: string): Promise<Ticker> {
-        const product = BitfinexExchangeAPI.product(gdaxProduct);
+    loadTicker(genericProduct: string): Promise<Ticker> {
+        const product = BitfinexExchangeAPI.product(genericProduct);
         return request.get(`${API_V1}/pubticker/${product}`)
             .accept('application/json')
             .then((res: Response) => {
@@ -158,7 +172,7 @@ export class BitfinexExchangeAPI implements PublicExchangeAPI, AuthenticatedExch
                 }
                 const ticker: any = res.body;
                 return {
-                    productId: gdaxProduct,
+                    productId: genericProduct,
                     ask: ticker.ask ? Big(ticker.ask) : null,
                     bid: ticker.bid ? Big(ticker.bid) : null,
                     price: Big(ticker.last_price || 0),
@@ -180,7 +194,7 @@ export class BitfinexExchangeAPI implements PublicExchangeAPI, AuthenticatedExch
     placeOrder(order: PlaceOrderMessage): Promise<LiveOrder> {
         return this.checkAuth().then((auth: ExchangeAuthConfig) => {
             const bfOrder: BitfinexOrderRequest = {
-                product_id: PRODUCT_MAP[order.productId],
+                product_id: BitfinexExchangeAPI.product(order.productId),
                 size: order.size,
                 price: order.price,
                 side: order.side,
@@ -251,7 +265,7 @@ export class BitfinexExchangeAPI implements PublicExchangeAPI, AuthenticatedExch
                     if (!balances[wallet.type]) {
                         balances[wallet.type] = {};
                     }
-                    const cur = REVERSE_CURRENCY_MAP[wallet.currency.toLowerCase()];
+                    const cur = wallet.currency.toUpperCase();
                     balances[wallet.type][cur] = {
                         available: Big(wallet.available),
                         balance: Big(wallet.amount)

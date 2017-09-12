@@ -32,7 +32,7 @@ describe('GDAX Exchange API', () => {
                 volume: '1000',
                 trade_id: 101
             });
-        return gdax.loadTicker('BTC-USD').then((ticker) => {
+        return gdax.loadTicker('BTC/USD').then((ticker) => {
             assert(ticker.bid.eq(249));
             assert(ticker.ask.eq(250));
             assert(ticker.volume.eq(1000));
@@ -49,7 +49,7 @@ describe('GDAX Exchange API', () => {
                 volume: '1000',
                 trade_id: 101
             });
-        return gdax.loadMidMarketPrice('BTC-USD').then((price) => {
+        return gdax.loadMidMarketPrice('BTC/USD').then((price) => {
             assert(price.eq(249.5));
         });
     });
@@ -63,7 +63,7 @@ describe('GDAX Exchange API', () => {
                 bids: [['240', '5', 1], ['245', '3', 1], ['248', '1', 1]],
                 asks: [['250', '3', 1], ['251', '1.15', 1]]
             });
-        gdax.loadOrderbook('BTC-USD').then((book) => {
+        gdax.loadOrderbook('BTC/USD').then((book) => {
             assert.equal(book.numBids, 3);
             assert.equal(book.numAsks, 2);
             assert(book.asksTotal.eq(4.15));

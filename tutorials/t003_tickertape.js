@@ -1,4 +1,3 @@
-"use strict";
 /***************************************************************************************************************************
  * @license                                                                                                                *
  * Copyright 2017 Coinbase, Inc.                                                                                           *
@@ -12,7 +11,8 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the                      *
  * License for the specific language governing permissions and limitations under the License.                              *
  ***************************************************************************************************************************/
-Object.defineProperty(exports, "__esModule", { value: true });
+"use strict";
+exports.__esModule = true;
 var GTT = require("gdax-trading-toolkit");
 var BitfinexExchangeAPI_1 = require("gdax-trading-toolkit/build/src/exchanges/bitfinex/BitfinexExchangeAPI");
 var GDAXExchangeAPI_1 = require("gdax-trading-toolkit/build/src/exchanges/gdax/GDAXExchangeAPI");
@@ -40,7 +40,7 @@ var publicExchanges = [gdax, bitfinex];
 setInterval(function () {
     getAndPrintTickers(publicExchanges, 'BTC-USD').then(function () {
         return getAndPrintTickers(publicExchanges, 'ETH-USD');
-    }).catch(function (err) {
+    })["catch"](function (err) {
         logger.log('error', err.message, err);
     });
 }, 5000);

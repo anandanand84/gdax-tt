@@ -1,3 +1,4 @@
+import { ProductMap } from '../ProductMap';
 /***************************************************************************************************************************
  * @license                                                                                                                *
  * Copyright 2017 Coinbase, Inc.                                                                                           *
@@ -100,6 +101,22 @@ export class GDAXExchangeAPI implements PublicExchangeAPI, AuthenticatedExchange
         return this._apiURL;
     }
 
+    static product(genericProduct: string) {
+        return ProductMap.ExchangeMap.get('GDAX').getExchangeProduct(genericProduct) || genericProduct;
+    }
+
+    static genericProduct(exchangeProduct: string) {
+        return ProductMap.ExchangeMap.get('GDAX').getGenericProduct(exchangeProduct) || exchangeProduct;
+    }
+
+    static getMarket(genericProduct: string) {
+        return ProductMap.ExchangeMap.get('GDAX').getMarket(genericProduct);
+    }
+    
+    static getMarketForExchangeProduct(exchangeProduct: string) {
+        return ProductMap.ExchangeMap.get('GDAX').getMarket(GDAXExchangeAPI.genericProduct(exchangeProduct));
+    }
+
     loadProducts(): Promise<Product[]> {
         const url = `${this.apiURL}/products`;
         return request.get(url)
@@ -110,10 +127,11 @@ export class GDAXExchangeAPI implements PublicExchangeAPI, AuthenticatedExchange
                 }
                 const products: GDAXAPIProduct[] = res.body;
                 return products.map((prod: GDAXAPIProduct) => {
+                    let ccxtMarket = GDAXExchangeAPI.getMarketForExchangeProduct(prod.id);
                     return {
-                        id: prod.id,
-                        baseCurrency: prod.base_currency,
-                        quoteCurrency: prod.quote_currency,
+                        id: GDAXExchangeAPI.genericProduct(prod.id) || prod.id,
+                        baseCurrency: ccxtMarket.base || prod.base_currency,
+                        quoteCurrency: ccxtMarket.quote || prod.quote_currency,
                         baseMinSize: Big(prod.base_min_size),
                         baseMaxSize: Big(prod.base_max_size),
                         quoteIncrement: Big(prod.quote_increment)
@@ -122,8 +140,8 @@ export class GDAXExchangeAPI implements PublicExchangeAPI, AuthenticatedExchange
             });
     }
 
-    loadMidMarketPrice(product: string): Promise<BigJS> {
-        return this.loadTicker(product).then((ticker) => {
+    loadMidMarketPrice(genericProduct: string): Promise<BigJS> {
+        return this.loadTicker(genericProduct).then((ticker) => {
             if (!ticker || !ticker.bid || !ticker.ask) {
                 throw new Error('Loading midmarket price failed because ticker data was incomplete or unavailable');
             }
@@ -131,18 +149,20 @@ export class GDAXExchangeAPI implements PublicExchangeAPI, AuthenticatedExchange
         });
     }
 
-    loadOrderbook(product: string): Promise<BookBuilder> {
-        return this.loadFullOrderbook(product);
+    loadOrderbook(genericProduct: string): Promise<BookBuilder> {
+        return this.loadFullOrderbook(genericProduct);
     }
 
-    loadFullOrderbook(product: string): Promise<BookBuilder> {
-        return this.loadGDAXOrderbook({ product: product, level: 3 }).then((body) => {
+    loadFullOrderbook(genericProduct: string): Promise<BookBuilder> {
+        let exchangeProduct = GDAXExchangeAPI.product(genericProduct);
+        return this.loadGDAXOrderbook({ product: exchangeProduct, level: 3 }).then((body) => {
             return this.buildBook(body);
         });
     }
 
     loadGDAXOrderbook(options: OrderbookEndpointParams): Promise<any> {
-        const url = `${this.apiURL}/products/${options.product}/book`;
+        let exchangeProduct = options.product;
+        const url = `${this.apiURL}/products/${exchangeProduct}/book`;
         return request.get(url)
             .accept('application/json')
             .query({ level: options.level })
@@ -156,13 +176,14 @@ export class GDAXExchangeAPI implements PublicExchangeAPI, AuthenticatedExchange
                 }
                 return res.body;
             }, (err: Error) => {
-                this.logger.log('error', `Error loading snapshot for ${options.product}`, err);
+                this.logger.log('error', `Error loading snapshot for ${exchangeProduct}`, err);
                 return Promise.resolve(null);
             });
     }
 
-    loadTicker(product: string): Promise<Ticker> {
-        const url = `${this.apiURL}/products/${product}/ticker`;
+    loadTicker(genericProduct: string): Promise<Ticker> {
+        let exchangeProduct = GDAXExchangeAPI.product(genericProduct);
+        const url = `${this.apiURL}/products/${exchangeProduct}/ticker`;
         return request.get(url)
             .accept('application/json')
             .then((res) => {
@@ -171,7 +192,7 @@ export class GDAXExchangeAPI implements PublicExchangeAPI, AuthenticatedExchange
                 }
                 const ticker: any = res.body;
                 return {
-                    productId: product,
+                    productId: exchangeProduct,
                     ask: ticker.ask ? Big(ticker.ask) : undefined,
                     bid: ticker.bid ? Big(ticker.bid) : undefined,
                     price: Big(ticker.price || 0),
@@ -213,8 +234,9 @@ export class GDAXExchangeAPI implements PublicExchangeAPI, AuthenticatedExchange
 
     // ----------------------------------- Authenticated API methods --------------------------------------------------//
     placeOrder(order: PlaceOrderMessage): Promise<LiveOrder> {
+        let exchangeProduct = GDAXExchangeAPI.product(order.productId);
         const gdaxOrder: GDAXOrderRequest = {
-            product_id: order.productId,
+            product_id: exchangeProduct,
             size: order.size,
             price: order.price,
             side: order.side,
@@ -243,9 +265,10 @@ export class GDAXExchangeAPI implements PublicExchangeAPI, AuthenticatedExchange
 
     }
 
-    cancelAllOrders(product: string): Promise<string[]> {
+    cancelAllOrders(genericProduct: string): Promise<string[]> {
         const apiCall = this.authCall('DELETE', `/orders`, {});
-        const options = product ? { product_id: product } : null;
+        let exchangeProduct = GDAXExchangeAPI.product(genericProduct);
+        const options = exchangeProduct ? { product_id: exchangeProduct } : null;
         return this.handleResponse<string[]>(apiCall, options).then((ids: string[]) => {
             return Promise.resolve(ids);
         });
@@ -258,11 +281,12 @@ export class GDAXExchangeAPI implements PublicExchangeAPI, AuthenticatedExchange
         });
     }
 
-    loadAllOrders(product: string): Promise<LiveOrder[]> {
+    loadAllOrders(genericProduct: string): Promise<LiveOrder[]> {
+        let exchangeProduct = GDAXExchangeAPI.product(genericProduct);
         const self = this;
         let allOrders: LiveOrder[] = [];
         const loop: (after: string) => Promise<LiveOrder[]> = (after: string) => {
-            return self.loadNextOrders(product, after).then((result) => {
+            return self.loadNextOrders(exchangeProduct, after).then((result) => {
                 const liveOrders: LiveOrder[] = result.orders.map(GDAXOrderToOrder);
                 allOrders = allOrders.concat(liveOrders);
                 if (result.after) {
@@ -382,12 +406,13 @@ export class GDAXExchangeAPI implements PublicExchangeAPI, AuthenticatedExchange
         return book;
     }
 
-    private loadNextOrders(product: string, after: string): Promise<OrderPage> {
+    private loadNextOrders(genericProduct: string, after: string): Promise<OrderPage> {
+        let exchangeProduct = GDAXExchangeAPI.product(genericProduct);
         const qs: any = {
             status: ['open', 'pending', 'active']
         };
-        if (product) {
-            qs.product_id = product;
+        if (exchangeProduct) {
+            qs.product_id = exchangeProduct;
         }
         if (after) {
             qs.after = after;
@@ -404,13 +429,14 @@ export class GDAXExchangeAPI implements PublicExchangeAPI, AuthenticatedExchange
 }
 
 function GDAXOrderToOrder(order: GDAXOrder): LiveOrder {
+    let genericProduct = GDAXExchangeAPI.genericProduct(order.product_id);
     return {
         price: Big(order.price),
         size: Big(order.size),
         side: order.side,
         id: order.id,
         time: new Date(order.created_at),
-        productId: order.product_id,
+        productId: genericProduct,
         status: order.status,
         extra: {
             post_only: order.post_only,

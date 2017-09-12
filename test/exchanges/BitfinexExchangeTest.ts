@@ -16,6 +16,7 @@ const assert = require('assert');
 const nock = require('nock');
 import { BitfinexConfig, BitfinexExchangeAPI } from '../../src/exchanges/bitfinex/BitfinexExchangeAPI';
 import { Balances } from '../../src/exchanges/AuthenticatedExchangeAPI';
+import { prepareProductMap } from '../../test/helper';
 
 const demoTicker = {
     mid: '875.155',
@@ -86,13 +87,16 @@ const demoBook = {
 };
 
 describe('The Bitfinex exchange API', () => {
+    before(async () => {
+        return prepareProductMap();
+    })
     const config: BitfinexConfig = {};
     const bitfinex = new BitfinexExchangeAPI(config);
     it('loads the stock ticker', () => {
         nock('https://api.bitfinex.com')
-            .get('/v1/pubticker/btcusd')
+            .get('/v1/pubticker/BTCUSD')
             .reply(200, demoTicker);
-        return bitfinex.loadTicker('BTC-USD').then((ticker) => {
+        return bitfinex.loadTicker('BTC/USD').then((ticker) => {
             assert(ticker.bid.eq(demoTicker.bid));
             assert(ticker.ask.eq(demoTicker.ask));
             assert(ticker.price.eq(demoTicker.last_price));
@@ -103,19 +107,19 @@ describe('The Bitfinex exchange API', () => {
 
     it('provides a midmarket price', () => {
         nock('https://api.bitfinex.com')
-            .get('/v1/pubticker/btcusd')
+            .get('/v1/pubticker/BTCUSD')
             .reply(200, demoTicker);
-        return bitfinex.loadMidMarketPrice('BTC-USD').then((price) => {
+        return bitfinex.loadMidMarketPrice('BTC/USD').then((price) => {
             assert(price.eq(875.155));
         });
     });
 
     it('loads an orderbook', () => {
         nock('https://api.bitfinex.com:443', { encodedQueryParams: true })
-            .get('/v1/book/btcusd')
+            .get('/v1/book/BTCUSD')
             .query({ grouped: '1' })
             .reply(200, demoBook);
-        return bitfinex.loadOrderbook('BTC-USD').then((book) => {
+        return bitfinex.loadOrderbook('BTC/USD').then((book) => {
             assert.equal(book.sequence, 0);
             assert.equal(book.numBids, 6);
             assert.equal(book.numAsks, 4);
@@ -160,6 +164,7 @@ describe('The Bitfinex exchange auth API', () => {
             .post('/v1/balances')
             .reply(200, demoBalances);
         return bitfinex.loadBalances().then((balances: Balances) => {
+            console.log(balances.exchange);
             assert.equal(balances.exchange.BTC.available.toFixed(3), '0.555');
             assert.equal(balances.deposit.BTC.balance.toFixed(2), '100.12');
         });
