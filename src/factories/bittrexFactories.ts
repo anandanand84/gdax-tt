@@ -1,3 +1,4 @@
+import { ProductMap } from '../exchanges/ProductMap';
 /***************************************************************************************************************************
  * @license                                                                                                                *
  * Copyright 2017 Coinbase, Inc.                                                                                           *
@@ -19,6 +20,10 @@ import { ExchangeFeedConfig } from '../exchanges/ExchangeFeed';
 import { ExchangeAuthConfig } from '../exchanges/AuthConfig';
 
 let publicAPIInstance: BittrexAPI;
+
+function getExchangeProduct(genericProduct:string):string {
+    return ProductMap.ExchangeMap.get('Bittrex').getExchangeProduct(genericProduct);
+}
 
 /**
  * A convenience function that returns a GDAXExchangeAPI instance for accessing REST methods conveniently. If API
@@ -64,6 +69,9 @@ export function FeedFactory(logger: Logger, productIds: string[], auth?: Exchang
         key: process.env.BITTREX_KEY,
         secret: process.env.BITTREX_SECRET
     };
+    productIds = productIds.map((genericProduct: string) => {
+        return getExchangeProduct(genericProduct) || genericProduct;
+    });
     // There are too many books on Bittrex to just subscribe to all of them, so productIds is a required param
     return getSubscribedFeeds({ auth: auth, logger: logger, wsUrl: null }, productIds);
 }

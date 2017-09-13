@@ -15,17 +15,20 @@
 import { PoloniexExchangeAPI } from '../exchanges/poloniex/PoloniexExchangeAPI';
 import { Logger } from '../utils/Logger';
 import { PoloniexFeed, PoloniexFeedConfig } from '../exchanges/poloniex/PoloniexFeed';
+import { ProductMap } from '../exchanges/ProductMap';
 import {
-    gdaxToPolo,
     getAllProductInfo,
     POLONIEX_WS_FEED,
     PoloniexProducts,
-    PRODUCT_MAP
 } from '../exchanges/poloniex/PoloniexCommon';
 import { ExchangeFeedConfig, getFeed } from '../exchanges/ExchangeFeed';
 import { ExchangeAuthConfig } from '../exchanges/AuthConfig';
 
 let publicAPIInstance: PoloniexExchangeAPI;
+
+function getExchangeProduct(genericProduct:string):string {
+    return ProductMap.ExchangeMap.get('Poloniex').getExchangeProduct(genericProduct);
+}
 
 /**
  * A convenience function that returns a GDAXExchangeAPI instance for accessing REST methods conveniently. If API
@@ -71,25 +74,13 @@ export function getSubscribedFeeds(options: any, products: string[]): Promise<Po
 }
 
 function subscribeToAll(products: string[], feed: PoloniexFeed, info: PoloniexProducts) {
-    products.forEach((product: string) => {
-        const id: number = getChannelId(product, info);
+    console.log('Subscribing Products, Generic Product', products);
+    products.map((genericProduct: string) => {
+        const id: any = getExchangeProduct(genericProduct) || genericProduct;
         if (id > 0) {
             feed.subscribe(id);
         }
     });
-}
-
-function getChannelId(product: string, info: PoloniexProducts): number {
-    let result: number;
-    for (const id in info) {
-        const symbol = info[id].poloniexSymbol;
-        const found = (symbol === (PRODUCT_MAP[product] || product)) || (symbol === gdaxToPolo(product));
-        result = found ? info[id].poloniexId : -1;
-        if (found) {
-            break;
-        }
-    }
-    return result;
 }
 
 /**

@@ -1,3 +1,4 @@
+import { ProductMap } from '../ProductMap';
 /***************************************************************************************************************************
  * @license                                                                                                                *
  * Copyright 2017 Coinbase, Inc.                                                                                           *
@@ -17,7 +18,7 @@ import { AuthenticatedExchangeAPI, Balances } from '../AuthenticatedExchangeAPI'
 import { CryptoAddress, ExchangeTransferAPI, TransferRequest, TransferResult, WithdrawalRequest } from '../ExchangeTransferAPI';
 import { BookBuilder } from '../../lib/BookBuilder';
 import { ExchangeAuthConfig } from '../AuthConfig';
-import { gdaxifyProduct, POLONIEX_API_URL, PRODUCT_MAP } from './PoloniexCommon';
+import { getGenericProduct, POLONIEX_API_URL } from './PoloniexCommon';
 import { getSignature, handleResponse } from '../utils';
 import { ConsoleLoggerFactory, Logger } from '../../utils/Logger';
 import { Big, BigJS } from '../../lib/types';
@@ -35,9 +36,6 @@ export interface PoloniexConfig {
  * An adapter class that maps the standardized API calls to Polinex's API interface
  */
 export class PoloniexExchangeAPI implements PublicExchangeAPI, AuthenticatedExchangeAPI, ExchangeTransferAPI {
-    static product(gdaxProduct: string) {
-        return PRODUCT_MAP[gdaxProduct] || gdaxProduct;
-    }
 
     owner: string;
     auth: ExchangeAuthConfig;
@@ -49,11 +47,27 @@ export class PoloniexExchangeAPI implements PublicExchangeAPI, AuthenticatedExch
         this.logger = config.logger || ConsoleLoggerFactory();
     }
 
+    static product(genericProduct: string) {
+        return ProductMap.ExchangeMap.get('Poloniex').getExchangeProduct(genericProduct) || genericProduct;
+    }
+
+    static genericProduct(exchangeProduct: string) {
+        return ProductMap.ExchangeMap.get('Poloniex').getGenericProduct(exchangeProduct) || exchangeProduct;
+    }
+
+    static getMarket(genericProduct: string) {
+        return ProductMap.ExchangeMap.get('Poloniex').getMarket(genericProduct);
+    }
+    
+    static getMarketForExchangeProduct(exchangeProduct: string) {
+        return ProductMap.ExchangeMap.get('Poloniex').getMarket(PoloniexExchangeAPI.genericProduct(exchangeProduct));
+    }
+
     loadProducts(): Promise<Product[]> {
         const req = this.publicRequest('returnTicker');
         return handleResponse<PoloniexTickers>(req, null).then((tickers: PoloniexTickers) => {
             const products: string[] = Object.keys(tickers);
-            const productList: Product[] = products.map(gdaxifyProduct);
+            const productList: Product[] = products.map(getGenericProduct);
             return Promise.resolve(productList);
         });
     }
@@ -74,7 +88,7 @@ export class PoloniexExchangeAPI implements PublicExchangeAPI, AuthenticatedExch
         return undefined;
     }
 
-    loadAllOrders(gdaxProduct: string): Promise<LiveOrder[]> {
+    loadAllOrders(genericProduct: string): Promise<LiveOrder[]> {
         return undefined;
     }
 
@@ -114,19 +128,19 @@ export class PoloniexExchangeAPI implements PublicExchangeAPI, AuthenticatedExch
         return undefined;
     }
 
-    loadMidMarketPrice(gdaxProduct: string): Promise<BigJS> {
+    loadMidMarketPrice(genericProduct: string): Promise<BigJS> {
         const req = this.publicRequest('returnTicker');
         return handleResponse<PoloniexTickers>(req, {
             owner: this.owner,
             req: 'returnTicker'
         }).then((tickers: PoloniexTickers) => {
-            const ticker = tickers[PoloniexExchangeAPI.product(gdaxProduct)];
+            const ticker = tickers[PoloniexExchangeAPI.product(genericProduct)];
             return Big(ticker.lowestAsk).plus(ticker.highestBid).times(0.5);
         });
     }
 
-    loadOrderbook(gdaxProduct: string): Promise<BookBuilder> {
-        const product = PoloniexExchangeAPI.product(gdaxProduct);
+    loadOrderbook(genericProduct: string): Promise<BookBuilder> {
+        const product = PoloniexExchangeAPI.product(genericProduct);
         const req = this.publicRequest('returnOrderBook', { currencyPair: product });
         return handleResponse<PoloniexOrderbook>(req, {
             owner: this.owner,
@@ -157,8 +171,8 @@ export class PoloniexExchangeAPI implements PublicExchangeAPI, AuthenticatedExch
         });
     }
 
-    loadTicker(gdaxProduct: string): Promise<Ticker> {
-        const product = PoloniexExchangeAPI.product(gdaxProduct);
+    loadTicker(genericProduct: string): Promise<Ticker> {
+        const product = PoloniexExchangeAPI.product(genericProduct);
         const req = this.publicRequest('returnTicker');
         return handleResponse<PoloniexTickers>(req, {
             owner: this.owner,
@@ -166,7 +180,7 @@ export class PoloniexExchangeAPI implements PublicExchangeAPI, AuthenticatedExch
         }).then((tickers: PoloniexTickers) => {
             const ticker = tickers[product];
             return {
-                productId: gdaxProduct,
+                productId: genericProduct,
                 price: Big(ticker.last),
                 bid: Big(ticker.highestBid),
                 ask: Big(ticker.lowestAsk),

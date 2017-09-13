@@ -20,15 +20,27 @@ import { BookBuilder } from '../../lib/BookBuilder';
 import { Logger } from '../../utils/Logger';
 import { PlaceOrderMessage } from '../../core/Messages';
 import { LiveOrder } from '../../lib/Orderbook';
+import { ProductMap } from '../ProductMap';
 
 export class BittrexAPI implements PublicExchangeAPI, AuthenticatedExchangeAPI {
-    static normalizeProduct(gdaxProduct: string): string {
-        const [base, quote] = gdaxProduct.split('-');
-        return `${quote}-${base}`;
-    }
-
     readonly owner: string;
     readonly logger: Logger;
+
+    static product(genericProduct: string) {
+        return ProductMap.ExchangeMap.get('Bittrex').getExchangeProduct(genericProduct) || genericProduct;
+    }
+
+    static genericProduct(exchangeProduct: string) {
+        return ProductMap.ExchangeMap.get('Bittrex').getGenericProduct(exchangeProduct) || exchangeProduct;
+    }
+
+    static getMarket(genericProduct: string) {
+        return ProductMap.ExchangeMap.get('Bittrex').getMarket(genericProduct);
+    }
+    
+    static getMarketForExchangeProduct(exchangeProduct: string) {
+        return ProductMap.ExchangeMap.get('Bittrex').getMarket(BittrexAPI.genericProduct(exchangeProduct));
+    }
 
     constructor(auth: ExchangeAuthConfig, logger: Logger) {
         this.owner = 'Bittrex';
@@ -54,7 +66,7 @@ export class BittrexAPI implements PublicExchangeAPI, AuthenticatedExchangeAPI {
                 }
                 const result: Product[] = data.result.map((market: any) => {
                     return {
-                        id: market.MarketName, // same format as GDAX, so no need to map
+                        id: BittrexAPI.genericProduct(market.MarketName), // same format as GDAX, so no need to map
                         baseCurrency: market.BaseCurrency,
                         quoteCurrency: market.marketCurrency,
                         baseMinSize: Big(market.MinTradeSize),
@@ -67,14 +79,14 @@ export class BittrexAPI implements PublicExchangeAPI, AuthenticatedExchangeAPI {
         });
     }
 
-    loadMidMarketPrice(gdaxProduct: string): Promise<BigNumber.BigNumber> {
-        return this.loadTicker(gdaxProduct).then((ticker: Ticker) => {
+    loadMidMarketPrice(genericProduct: string): Promise<BigNumber.BigNumber> {
+        return this.loadTicker(genericProduct).then((ticker: Ticker) => {
             return ticker.bid.plus(ticker.ask).times(0.5);
         });
     }
 
-    loadOrderbook(gdaxProduct: string): Promise<BookBuilder> {
-        const product = BittrexAPI.normalizeProduct(gdaxProduct);
+    loadOrderbook(genericProduct: string): Promise<BookBuilder> {
+        const product = BittrexAPI.product(genericProduct);
         return new Promise((resolve, reject) => {
             Bittrex.getorderbook({
                 market: product,
@@ -111,8 +123,8 @@ export class BittrexAPI implements PublicExchangeAPI, AuthenticatedExchangeAPI {
         });
     }
 
-    loadTicker(gdaxProduct: string): Promise<Ticker> {
-        const product = BittrexAPI.normalizeProduct(gdaxProduct);
+    loadTicker(genericProduct: string): Promise<Ticker> {
+        const product = BittrexAPI.product(genericProduct);
         return new Promise((resolve, reject) => {
             Bittrex.getticker({ market: product }, (err, data) => {
                 if (err) {
@@ -122,7 +134,7 @@ export class BittrexAPI implements PublicExchangeAPI, AuthenticatedExchangeAPI {
                     return reject(new Error('Unexpected response from Bittrex: ' + JSON.stringify(data)));
                 }
                 const result: Ticker = {
-                    productId: gdaxProduct,
+                    productId: genericProduct,
                     ask: Big(data.result.Ask),
                     bid: Big(data.result.Bid),
                     price: Big(data.result.Last),
@@ -149,7 +161,7 @@ export class BittrexAPI implements PublicExchangeAPI, AuthenticatedExchangeAPI {
         throw new Error('Method not implemented.');
     }
 
-    loadAllOrders(gdaxProduct: string): Promise<LiveOrder[]> {
+    loadAllOrders(genericProduct: string): Promise<LiveOrder[]> {
         throw new Error('Method not implemented.');
     }
 

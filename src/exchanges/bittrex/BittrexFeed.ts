@@ -154,14 +154,14 @@ export class BittrexFeed extends ExchangeFeed {
 
     private updateExchangeState(states: BittrexExchangeState[]) {
 
-        const createUpdateMessage = (product: string, side: string, nonce: number, delta: BittrexOrder): LevelMessage => {
-            const seq = this.nextSequence(product);
+        const createUpdateMessage = (genericProduct: string, side: string, nonce: number, delta: BittrexOrder): LevelMessage => {
+            const seq = this.nextSequence(genericProduct);
             const message: LevelMessage = {
                 type: 'level',
                 time: new Date(),
                 sequence: seq,
                 sourceSequence: nonce,
-                productId: product,
+                productId: genericProduct,
                 side: side,
                 price: delta.Rate,
                 size: delta.Quantity,
@@ -172,22 +172,23 @@ export class BittrexFeed extends ExchangeFeed {
 
         states.forEach((state: BittrexExchangeState) => {
             const product = state.MarketName;
-            const snaphotSeq = this.getSnapshotSequence(product);
+            let genericProduct = BittrexAPI.genericProduct(product);
+            const snaphotSeq = this.getSnapshotSequence(genericProduct);
             if (state.Nounce <= snaphotSeq) {
                 return;
             }
             state.Buys.forEach((delta: BittrexOrder) => {
-                const msg: LevelMessage = createUpdateMessage(product, 'buy', state.Nounce, delta);
+                const msg: LevelMessage = createUpdateMessage(genericProduct, 'buy', state.Nounce, delta);
                 this.push(msg);
             });
             state.Sells.forEach((delta: BittrexOrder) => {
-                const msg: LevelMessage = createUpdateMessage(product, 'sell', state.Nounce, delta);
+                const msg: LevelMessage = createUpdateMessage(genericProduct, 'sell', state.Nounce, delta);
                 this.push(msg);
             });
             state.Fills.forEach((fill: BittrexFill) => {
                 const message: TradeMessage = {
                     type: 'trade',
-                    productId: product,
+                    productId: genericProduct,
                     time: new Date(fill.TimeStamp),
                     tradeId: '0',
                     price: fill.Rate,
@@ -203,7 +204,7 @@ export class BittrexFeed extends ExchangeFeed {
         tickers.forEach((bittrexTicker: BittrexTicker) => {
             const ticker: TickerMessage = {
                 type: 'ticker',
-                productId: BittrexAPI.normalizeProduct(bittrexTicker.MarketName),
+                productId: BittrexAPI.genericProduct(bittrexTicker.MarketName),
                 bid: Big(bittrexTicker.Bid),
                 ask: Big(bittrexTicker.Ask),
                 time: new Date(bittrexTicker.TimeStamp),
@@ -215,11 +216,12 @@ export class BittrexFeed extends ExchangeFeed {
     }
 
     private processSnapshot(product: string, state: BittrexExchangeState): SnapshotMessage {
+        let genericProduct = BittrexAPI.genericProduct(product);
         const orders: OrderPool = {};
         const snapshotMessage: SnapshotMessage = {
             type: 'snapshot',
             time: new Date(),
-            productId: product,
+            productId: genericProduct,
             sequence: state.Nounce,
             asks: [],
             bids: [],
@@ -231,7 +233,7 @@ export class BittrexFeed extends ExchangeFeed {
         state.Sells.forEach((order: BittrexOrder) => {
             addOrder(order, 'sell', snapshotMessage.asks);
         });
-        this.setSnapshotSequence(product, state.Nounce);
+        this.setSnapshotSequence(genericProduct, state.Nounce);
         return snapshotMessage;
 
         function addOrder(order: BittrexOrder, side: string, levelArray: PriceLevelWithOrders[]) {
