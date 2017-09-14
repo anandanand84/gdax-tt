@@ -65,10 +65,12 @@ export class BittrexAPI implements PublicExchangeAPI, AuthenticatedExchangeAPI {
                     return reject(new Error('Unexpected response from Bittrex: ' + JSON.stringify(data)));
                 }
                 const result: Product[] = data.result.map((market: any) => {
+                    let genericProduct =  ProductMap.ExchangeMap.get('Bittrex').getGenericProduct(market.MarketName);
+                    let genericProductMeta =  ProductMap.ExchangeMap.get('Bittrex').getMarket(genericProduct);
                     return {
-                        id: BittrexAPI.genericProduct(market.MarketName), // same format as GDAX, so no need to map
-                        baseCurrency: market.BaseCurrency,
-                        quoteCurrency: market.marketCurrency,
+                        id: genericProduct, // same format as GDAX, so no need to map
+                        baseCurrency: genericProductMeta.base,
+                        quoteCurrency: genericProductMeta.quote,
                         baseMinSize: Big(market.MinTradeSize),
                         baseMaxSize: Big('1e18'),
                         quoteIncrement: Big(market.MinTradeSize)

@@ -30,11 +30,11 @@ export const POLONIEX_API_URL = 'https://poloniex.com/public';
  */
 export function getGenericProduct(poloProduct: string): Product {
     let genericProduct =  ProductMap.ExchangeMap.get('Poloniex').getGenericProduct(poloProduct);
-    let [quote, base] = poloProduct.split('_');
+    let genericProductMeta =  ProductMap.ExchangeMap.get('Poloniex').getMarket(genericProduct);
     return {
         id: genericProduct,
-        quoteCurrency: quote,
-        baseCurrency: base,
+        quoteCurrency: genericProductMeta.quote,
+        baseCurrency: genericProductMeta.base,
         baseMaxSize: Big(1e6),
         baseMinSize: Big(1e-6),
         quoteIncrement: Big(1e-6)
