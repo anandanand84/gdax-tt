@@ -20,6 +20,12 @@ import { Big } from '../../lib/types';
 import { OrderPool } from '../../lib/BookBuilder';
 import { Level3Order, PriceLevelWithOrders } from '../../lib/Orderbook';
 
+var wait = async function(time:number) {
+    return new Promise((resolve, reject)=> {
+        setTimeout(resolve, time)
+    });
+}
+
 export class BittrexFeed extends ExchangeFeed {
     private client: any;
     private connection: any;
@@ -46,13 +52,17 @@ export class BittrexFeed extends ExchangeFeed {
         return 'Bittrex';
     }
 
-    subscribe(products: string[]): boolean {
+    async subscribe(products: string[]): Promise<boolean> {
         if (!this.connection) {
             return false;
         }
-        products.forEach((product: string) => {
+        let index = 1;
+        for (let product of products) {
+            if(index % 10 == 0) await wait(10000);
+            index++;
             this.client.call('CoreHub', 'SubscribeToExchangeDeltas', product).done((err: Error, result: boolean) => {
                 if (err) {
+                    console.log('Error occured');
                     return console.error(err);
                 }
 
@@ -64,7 +74,7 @@ export class BittrexFeed extends ExchangeFeed {
                 const snapshot: SnapshotMessage = this.processSnapshot(product, data);
                 this.push(snapshot);
             });
-        });
+        }
         return true;
     }
 

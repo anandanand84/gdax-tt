@@ -51,7 +51,7 @@ export interface SkippedMessageEvent {
  * A live orderbook. This class maintains the state of an orderbook (using BookBuilder) in realtime by responding to
  * messages from attached feeds.
  */
-export class LiveOrderbook extends Writable implements Orderbook {
+export class RedisBook extends Writable implements Orderbook {
     public readonly product: string;
     public readonly baseCurrency: string;
     public readonly quoteCurrency: string;

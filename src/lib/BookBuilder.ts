@@ -35,6 +35,8 @@ export function AggregatedLevelFactory(totalSize: Biglike, price: Biglike, side:
 }
 
 export function AggregatedLevelFromPriceLevel(priceLevel: PriceLevelWithOrders): AggregatedLevelWithOrders {
+    priceLevel.price = Big(priceLevel.price)
+    priceLevel.totalSize = Big(priceLevel.totalSize)
     const level = new AggregatedLevelWithOrders(priceLevel.price);
     level.totalSize = priceLevel.totalSize;
     level.totalValue = priceLevel.price.times(priceLevel.totalSize);

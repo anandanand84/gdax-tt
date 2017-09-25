@@ -18,6 +18,10 @@ export class CCXTProductMap {
         return this.exchange.markets[genericProduct]['id']
     }
 
+    getAvailableProducts():string[] {
+        return this.exchange.symbols;
+    }
+
     getGenericProduct(exchangeProduct:string):string {
         if(!this.exchange.marketsById[exchangeProduct]) {
             console.trace('Exchange Product not found');

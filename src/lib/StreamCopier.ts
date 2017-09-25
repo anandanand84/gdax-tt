@@ -13,7 +13,6 @@
  ***************************************************************************************************************************/
 
 import { PassThrough, Readable, Writable } from 'stream';
-import * as assert from 'assert';
 import { EventEmitter } from 'events';
 
 /**
@@ -96,7 +95,6 @@ export class StreamCopier extends EventEmitter {
             return false;
         }
         const buffer = this.bufferStreams[connection.index];
-        assert(buffer instanceof PassThrough);
         buffer.pipe(stream);
         return true;
     }

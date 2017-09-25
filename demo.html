@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1, user-scalable=yes">
+    <title>wizzywid output</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.3/socket.io.js"></script>
+    <script src="https://d3js.org/d3-array.v1.min.js"></script>
+    <script src="https://d3js.org/d3-collection.v1.min.js"></script>
+    <script src="https://d3js.org/d3-color.v1.min.js"></script>
+    <script src="https://d3js.org/d3-format.v1.min.js"></script>
+    <script src="https://d3js.org/d3-interpolate.v1.min.js"></script>
+    <script src="https://d3js.org/d3-time.v1.min.js"></script>
+    <script src="https://d3js.org/d3-time-format.v2.min.js"></script>
+    <script src="https://d3js.org/d3-scale.v1.min.js"></script>
+    <script src="dist/browser.js"></script>
+    <base href="https://polygit.org/polymer+:master/webcomponents+:master/shadycss+webcomponents+:master/paper*+polymerelements+:master/iron*+polymerelements+:master/app*+polymerelements+:master/neon*+polymerelements+:master/components/">
+    <script src="webcomponentsjs/webcomponents-loader.js"></script>
+
+    <link rel="import" href="polymer/polymer-element.html">
+    <link rel="import" href="polymer/lib/elements/dom-repeat.html">
+    <link rel="import" href="paper-button/paper-button.html">
+
+    <style>
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            font-family: 'Roboto', 'Noto', sans-serif;
+            line-height: 1.5;
+            background-color: #BAB7B7;
+        }
+
+        market-depth {
+            margin: 10px;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+        }
+    </style>
+</head>
+
+<body>
+
+    <market-depth></market-depth>
+
+    <dom-module id="market-depth">
+        <template>
+            <style>
+                 :host {
+                    display: block;
+                    position: relative;
+                    width: 100%;
+                    height: 100%;
+                    box-sizing: border-box;
+                    height: 100%;
+                    padding: 15px;
+                }
+
+                .depth-row {
+                    position: relative;
+                    font-size: 13px;
+                    display: flex;
+                    justify-content: space-between;
+                    text-align: right;
+                    word-break: normal;
+                    flex-wrap: nowrap;
+                    white-space: nowrap;
+                }
+
+                .bid {
+                    color: #549650;
+                }
+
+                .ask {
+                    color: #FC6A42;
+                }
+
+                .spread {
+                    width: 100%;
+                    height: 15px;
+                    padding: 4px;
+                    font-size: 13px;
+                    display: flex;
+                    justify-content: space-around;
+                }
+
+                .flex-text {
+                    width: 55%;
+                    word-break: normal;
+                    flex-wrap: nowrap;
+                    white-space: nowrap
+                }
+
+                .price {
+                    width: 40%;
+                }
+
+                .size {
+                    width: 25%;
+                }
+
+                .value {
+                    width: 35%;
+                }
+
+                .size-chart {
+                    height: 100%;
+                    position: absolute;
+                    min-width: 1px;
+                    opacity: 0.5;
+                }
+
+                .ask-size-background {
+                    background-color: #FC6A42;
+                }
+
+                .bid-size-background {
+                    background-color: #549650;
+                }
+
+                .grid {
+                    display: grid;
+                    grid-gap: 1rem;
+                    width: 100%;
+                    height: 100%;
+                    grid-template-columns: 2fr 1.3fr;
+                    grid-template-rows: 8fr 3fr;
+                    grid-template-areas: "book history" "depth-chart depth-chart"
+                }
+
+                .book {
+                    grid-area: book;
+                    max-height: 100%;
+                    overflow: scroll;
+                }
+
+                .history {
+                    grid-area: history;
+                    max-height: 100%;
+                    overflow: scroll;
+                }
+
+                .depth-chart {
+                    grid-area: depth-chart;
+                }
+
+                 ::-webkit-scrollbar {
+                    display: none;
+                }
+
+                .buy-trade {
+                    background: #549650
+                }
+
+                .sell-trade {
+                    background: #FC6A42;
+                }
+            </style>
+            <div class="grid">
+                <div id="book" class="book">
+                    <div class="depth-row" style="text-align: right;">
+                        <span class="flex-text size">size</span>
+                        <span class="flex-text price">price</span>
+                        <span class="flex-text value">value</span>
+                    </div>
+                    <template is="dom-repeat" items="[[asks]]">
+                        <div class="depth-row">
+                            <div class="size-chart ask-size-background" style$="width:[[item.relativeSizeWidth]]px;"></div>
+                            <span class="flex-text size">[[item.size]]</span>
+                            <span class="flex-text ask price">[[item.price]]</span>
+                            <span class="flex-text value">[[item.value]]</span>
+                        </div>
+                    </template>
+                    <div class="spread">
+                        spread : [[spread]]%
+                    </div>
+                    <template is="dom-repeat" items="[[bids]]">
+                        <div class="depth-row">
+                            <div class="size-chart bid-size-background" style$="width:[[item.relativeSizeWidth]]px;"></div>
+                            <span class="flex-text size">[[item.size]]</span>
+                            <span class="flex-text bid price">[[item.price]]</span>
+                            <span class="flex-text value">[[item.value]]</span>
+                        </div>
+                    </template>
+                </div>
+                <div class="history">
+                    <template is="dom-repeat" items="[[trade]]">
+                        <div class="depth-row">
+                            <div class$="size-chart {{getClassForTrade(item)}}" style="width:100%;"></div>
+                            <span class="flex-text">[[item.size]]</span>
+                            <span class="flex-text">[[item.price]]</span>
+                        </div>
+                    </template>
+                </div>
+                <div class="depth-chart">
+                    <div style="width:100%;height:100%;position:relative;">
+                        <canvas style="position:absolute;" id="canvas"></canvas>
+                    </div>
+                </div>
+            </div>
+        </template>
+        <script>
+            function nFormatter(num, digits = 1) {
+                var si = [
+                    { value: 1E18, symbol: "E" },
+                    { value: 1E15, symbol: "P" },
+                    { value: 1E12, symbol: "T" },
+                    { value: 1E9, symbol: "G" },
+                    { value: 1E6, symbol: "M" },
+                    { value: 1E3, symbol: "k" }
+                ], rx = /\.0+$|(\.[0-9]*[1-9])0+$/, i;
+                for (i = 0; i < si.length; i++) {
+                    if (num >= si[i].value) {
+                        return (num / si[i].value).toFixed(digits).replace(rx, "$1") + si[i].symbol;
+                    }
+                }
+                return num.toFixed(digits).replace(rx, "$1");
+            }
+
+            window.addEventListener('WebComponentsReady', function () {
+                class MarketDepth extends Polymer.Element {
+                    static get is() { return 'market-depth'; }
+                    static get properties() {
+                        return {
+                            scripId: {
+                                type: String,
+                                value: 'ETH/USDT',
+                                observer: 'scripChanged'
+                            },
+                            book: {
+                                type: Object
+                            },
+                            trade: {
+                                type: Array,
+                                value: []
+                            },
+                            zoomLevel: {
+                                type: Number,
+                                value: 4
+                            }
+                        }
+                    }
+
+                    /**
+                      * Instance of the element is created/upgraded. Useful for initializing
+                      * state, set up event listeners, create shadow dom.
+                      * @constructor
+                      */
+                    constructor() {
+                        super();
+                        this.bookChange = this._bookChange.bind(this);
+                        this._onTrade = this._onTrade.bind(this);
+                    }
+
+                    scripChanged(newVal, oldVal) {
+                        if (this.book) {
+                            this.book.removeAllListeners('LiveOrderbook.update')
+                            this.book.removeAllListeners('LiveOrderbook.trade')
+                            console.log("Unsubscribe Book", oldVal);
+                            unsubscribeBook(oldVal)
+                        }
+                        console.log("subscribe Book", newVal);
+                        this.book = subscribeBook(newVal);
+                        this.book.addListener('LiveOrderbook.update', this.bookChange)
+                        this.book.addListener('LiveOrderbook.trade', this._onTrade)
+                        console.log(this.book);
+                    }
+
+                    _bookChange() {
+                        console.log('Book changed');
+                        this.updateOrderBook()
+                        this.updateDepthMap();
+                        if(!this.centeredBook) {
+                            setTimeout(() => {
+                                this.$.book.scrollTop = this.$.book.clientHeight / 2;
+                                this.centeredBook  = true;
+                            }, 300)
+                        }
+                    }
+
+                    getClassForTrade(msg) {
+                        if (msg.side === 'buy') {
+                            return 'buy-trade';
+                        }
+                        return 'sell-trade';
+                    }
+
+                    _onTrade(msg) {
+                        msg.price = msg.price.toPrecision(8);
+                        msg.size = msg.size.toPrecision(8);
+                        this.unshift('trade', msg)
+                    }
+
+                    updateOrderBook() {
+                        let state = this.book.book.state()
+                        let max = Math.max(...state.asks.slice(0, 30).map((val) => val.totalValue.toNumber()), ...state.bids.slice(0, 30).map((val) => val.totalValue.toNumber()));
+                        this.set('asks', state.asks.map((ask) => {
+                            return {
+                                relativeSizeWidth: (38 / max) * ask.totalValue.toNumber(),
+                                size: ask.totalSize.toFixed(3),
+                                price: ask.price.toFixed(8),
+                                value: ask.totalValue.toFixed(3)
+                            }
+                        }).slice(0, 30).reverse());
+                        this.set('bids', state.bids.map((bid) => {
+                            return {
+                                relativeSizeWidth: (38 / max) * bid.totalValue.toNumber(),
+                                size: bid.totalSize.toFixed(3),
+                                price: bid.price.toFixed(8),
+                                value: bid.totalValue.toFixed(3)
+                            }
+                        }).slice(0, 30));
+                        this.set('spread', this.book.book.lowestAsk.price.minus(this.book.book.highestBid.price).dividedBy(this.book.book.highestBid.price).mul(100).toFixed(4));
+                    }
+
+                    updateDepthMap() {
+                        //Find mid market price
+                        let midMarketPrice = this.book.book.lowestAsk.price.plus(this.book.book.highestBid.price).dividedBy(2);
+                        //Get zoom level 3%, 5%, 10%, 20%, 
+                        let zoomLevel = this.zoomLevel;
+                        //Get price for zoom level
+                        let endBidPrice = midMarketPrice.mul(1 - zoomLevel / 100);
+                        let endAskPrice = midMarketPrice.mul(1 + zoomLevel / 100);
+                        //Get orderbook iterator
+                        let bidIterator = this.book.book.bids.iterator();
+                        let bidSizeReached = false;
+                        let bidValues = [];
+                        let bidTotalSize = 0;
+                        let bidTotalValue = 0;
+                        let bidLevel;
+                        while ((bidLevel = bidIterator.prev()) && !bidSizeReached) {
+                            if (bidLevel.price.gt(endBidPrice)) {
+                                bidTotalSize = bidLevel.totalSize.plus(bidTotalSize);
+                                bidTotalValue = bidLevel.price.times(bidLevel.totalSize).plus(bidTotalValue)
+                                bidValues.push({
+                                    price: bidLevel.price.toNumber(),
+                                    cumSize: bidTotalSize.toNumber(),
+                                    cumValue: bidTotalValue.toNumber()
+                                })
+                            } else {
+                                bidSizeReached = true;
+                            }
+                        }
+
+                        let askIterator = this.book.book.asks.iterator();
+                        let askSizeReached = false;
+                        let askValues = [];
+
+
+                        let askTotalSize = 0;
+                        let askTotalValue = 0;
+                        let askLevel;
+                        while ((askLevel = askIterator.next()) && !askSizeReached) {
+                            if (askLevel.price.lt(endAskPrice)) {
+                                askTotalSize = askLevel.totalSize.plus(askTotalSize);
+                                askTotalValue = askLevel.price.times(askLevel.totalSize).plus(askTotalValue)
+                                askValues.push({
+                                    price: askLevel.price.toNumber(),
+                                    cumSize: askTotalSize.toNumber(),
+                                    cumValue: askTotalValue.toNumber()
+                                })
+                            } else {
+                                askSizeReached = true;
+                            }
+                        }
+
+                        this.drawDepth(bidValues, askValues)
+                    }
+
+                    _generateAxisValues(min, max, reqNumbers) {
+                        var approx = (max - min) / reqNumbers;
+                        var lookup = [
+                            0.000000025, 0.00000005, 0.00000001,
+                            0.00000025, 0.0000005, 0.0000001,
+                            0.0000025, 0.000005, 0.000001,
+                            0.000025, 0.00005, 0.00001,
+                            0.00025, 0.0005, 0.0001,
+                            0.0025, 0.005, 0.001,
+                            0.025, 0.05, 0.1,
+                            0.25, 0.5, 1.0,
+                            2.5, 5.0, 10.0,
+                            25.0, 50.0, 100.0,
+                            250.0, 500.0, 1000.0,
+                            2500.0, 5000.0, 10000.0,
+                            25000.0, 50000.0, 100000.0, 500000.0, 1000000.0];
+                        var na = [];
+                        for (var i in lookup) {
+                            var b = lookup[i] / approx;
+                            if (b < 1.0) {
+                                b = 1 / b;
+                            }
+                            na.push(b);
+                        }
+                        var closest = lookup[na.indexOf(Math.min.apply(this, na))];
+                        var minindex = Math.ceil(min / closest);
+                        var maxindex = Math.floor(max / closest);
+                        var vals = [];
+
+                        for (var j = minindex; j <= maxindex; j++) {
+                            vals.push((j * closest).toFixed(8));
+                        }
+
+                        return vals;
+                    }
+
+                    _scaleCanvasForHDPI(canvas, context, width, height) {
+                        canvas.width = width * window.devicePixelRatio;
+                        canvas.height = height * window.devicePixelRatio;
+                        canvas.style.width = width + 'px';
+                        canvas.style.height = height + 'px';
+                        context.translate(0.5, 0.5);
+                        context.translate(0, height * window.devicePixelRatio);
+                        context.scale(window.devicePixelRatio, -1 * window.devicePixelRatio);
+                    }
+
+                    _prepareCanvas() {
+                        var width;
+                        var height;
+                        var changed = false;
+                        //Iterate through all layers and get Canvas
+                        var canvas = this.$.canvas;
+                        var context = canvas.getContext("2d");
+                        context.font = '9pt Roboto';
+                        if (!width || !height) {
+                            width = (canvas.parentElement.clientWidth);
+                            height = (canvas.parentElement.clientHeight);
+                        }
+                        this._scaleCanvasForHDPI(canvas, context, width, height);
+                        return { context, width, height };
+                    }
+
+
+                    drawDepth(bidValues, askValues) {
+                        let { context, width, height } = this._prepareCanvas();
+                        //    context.fillStyle = 'black';
+                        //    context.fillRect(0,0, width, height);
+                        var startPosition = 0;
+                        var endPosition = width / 2;
+                        let prices = bidValues.map((val) => val.price)
+                            .concat(askValues.map((val) => val.price))
+                        let sizes = bidValues.map((val) => val.cumValue)
+                            .concat(askValues.map((val) => val.cumValue))
+                        let min = Math.min(...prices);
+                        let max = Math.max(...prices);
+                        let minSize = Math.min(...sizes);
+                        let maxSize = Math.max(...sizes);
+                        let xAxisValues = this._generateAxisValues(min, max, 5);
+                        let yAxisValues = this._generateAxisValues(minSize, maxSize, 5);
+
+                        let xScale = d3.scaleLinear();
+                        xScale.domain([min, max]);
+                        xScale.range([1, width]);
+                        let yScale = d3.scaleLinear();
+                        yScale.domain([minSize, maxSize]);
+                        yScale.range([1, height]);
+
+                        context.lineWidth = 2;
+                        context.strokeWidth = 2;
+
+                        context.beginPath();
+                        context.save();
+                        context.font = '9pt Roboto';
+                        context.scale(1, -1);
+
+                        yAxisValues.forEach((yValue) => {
+                            context.fillText(nFormatter(yValue), 2, -yScale(yValue));
+                        });
+                        
+                        yAxisValues.forEach((yValue) => {
+                            context.fillText(nFormatter(yValue), width - 45, -yScale(yValue));
+                        });
+
+                        xAxisValues.forEach((xValue) => {
+                            let price =  parseFloat(xValue);
+                            let label = '';
+                            if(price > 0) {
+                              label = price
+                            } else {
+                              label = price.toExponential();
+                            }
+                            context.fillText(label , xScale(xValue), -2);
+                        });
+
+                        context.restore();
+
+                        context.beginPath();
+                        var grd = context.createLinearGradient(0, 0, 0, height);
+                        grd.addColorStop(0, '#FFFFFF');
+                        grd.addColorStop(1, '#549650');
+                        context.fillStyle = '#2C4238';
+                        context.strokeStyle = '#79F65B';
+                        context.moveTo(bidValues[0].price, 0);
+                        bidValues.forEach(({ price, cumSize, cumValue }) => {
+                            context.lineTo(xScale(price), yScale(cumValue))
+                        })
+                        context.lineTo(xScale(bidValues[bidValues.length - 1].price) , 0);
+                        context.closePath();
+                        // if(!this.printed) {
+                        //   console.log(xScale(bidValues[0].price), xScale(bidValues[bidValues.length - 1].price) , 0);
+                        //   console.log(bidValues[0].price, bidValues[bidValues.length - 1].price , 0);
+                        //   this.printed = true;
+                        // }
+                        context.stroke();
+                        context.globalAlpha = 0.5;
+                        context.fill();
+                        context.globalAlpha = 1;
+
+                        // Draw Mid point
+                        context.beginPath();
+                        context.strokeStyle = 'grey';
+                        context.fillStyle = 'grey';
+                        context.globalAlpha = 0.3;
+                        context.moveTo(xScale(bidValues[0].price) , 0);
+                        context.lineTo(xScale(bidValues[0].price) , height);
+                        context.moveTo(xScale(askValues[0].price), height)
+                        context.lineTo(xScale(askValues[0].price), 0)
+                        context.fill();
+                        context.globalAlpha = 1;
+                        // context.stroke();
+
+                        context.beginPath();
+                        var grd = context.createLinearGradient(0, 0, 0, height);
+                        grd.addColorStop(0, '#FFFFFF');
+                        grd.addColorStop(1, '#FC6A42');
+                        context.fillStyle = '#433333';
+                        context.strokeStyle = '#FF5E32';
+
+                        context.moveTo(xScale(askValues[0].price), 0)
+                        askValues.forEach(({ price, cumSize, cumValue }) => {
+                            context.lineTo(xScale(price), yScale(cumValue))
+                        })
+                        context.lineTo(xScale(askValues[askValues.length - 1].price), 0);
+                        context.closePath();
+                        context.stroke();
+                        context.globalAlpha = 0.5;
+                        context.fill();
+                        context.globalAlpha = 1;
+                    }
+
+                }
+                customElements.define(MarketDepth.is, MarketDepth);
+            });
+        </script>
+    </dom-module>
+</body>
+
+</html>
