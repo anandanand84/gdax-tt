@@ -17,9 +17,6 @@
     "prepublishOnly": "yarn run build",
     "build:browser" : "browserify build/src/browser.js -t [ babelify --presets [ es2015 ] ] -d -o dist/browser.js"
   },
-  "bin": {
-    "gdaxConsole": "./build/src/consoles/gdaxConsole.js"
-  },
   "repository": {
     "type": "git",
     "url": "git@github.com:coinbase/gdax-tt.git"

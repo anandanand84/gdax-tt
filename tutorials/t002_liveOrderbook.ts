@@ -77,7 +77,7 @@ async function start() {
     let tradeVolume: number = 0;
     
     await ProductMap.configureExchange(EXCHANGE);
-    let products = ['BTC/USDT', 'ETH/USDT', 'LTC/USDT']//await ProductMap.ExchangeMap.get(EXCHANGE).getAvailableProducts();
+    let products = ['BTC/USDT', 'ETH/USDT', 'LTC/USDT', 'NEO/BTC']//await ProductMap.ExchangeMap.get(EXCHANGE).getAvailableProducts();
     // products = products.slice(1, 50);
     console.log('Total available products', products.length);
     

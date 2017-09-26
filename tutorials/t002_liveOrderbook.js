@@ -122,7 +122,7 @@ function start() {
                     return [4 /*yield*/, ProductMap_1.ProductMap.configureExchange(EXCHANGE)];
                 case 1:
                     _a.sent();
-                    products = ['BTC/USDT', 'ETH/USDT', 'LTC/USDT'] //await ProductMap.ExchangeMap.get(EXCHANGE).getAvailableProducts();
+                    products = ['BTC/USDT', 'ETH/USDT', 'LTC/USDT', 'NEO/BTC'] //await ProductMap.ExchangeMap.get(EXCHANGE).getAvailableProducts();
                     ;
                     // products = products.slice(1, 50);
                     console.log('Total available products', products.length);

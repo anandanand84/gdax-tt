@@ -31,7 +31,6 @@
             margin: 0;
             font-family: 'Roboto', 'Noto', sans-serif;
             line-height: 1.5;
-            background-color: #BAB7B7;
         }
 
         market-depth {
@@ -205,6 +204,7 @@
         </template>
         <script>
             function nFormatter(num, digits = 1) {
+                num = parseFloat(num);
                 var si = [
                     { value: 1E18, symbol: "E" },
                     { value: 1E15, symbol: "P" },
@@ -228,7 +228,7 @@
                         return {
                             scripId: {
                                 type: String,
-                                value: 'ETH/USDT',
+                                value: 'NEO/BTC',
                                 observer: 'scripChanged'
                             },
                             book: {
