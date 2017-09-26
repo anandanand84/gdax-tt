@@ -11,10 +11,10 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the                      *
  * License for the specific language governing permissions and limitations under the License.                              *
  ***************************************************************************************************************************/
-import * as GTT from '..';
-import { Ticker } from '../build/src/exchanges/PublicExchangeAPI';
-import { ProductMap } from '../build/src/exchanges/ProductMap';
-import { LiveBookConfig, LiveOrderbook, SkippedMessageEvent, TradeMessage } from "../build/src/core";
+import * as GTT from '../src/index';
+import { Ticker } from '../src/exchanges/PublicExchangeAPI';
+import { ProductMap } from '../src/exchanges/ProductMap';
+import { LiveBookConfig, LiveOrderbook, SkippedMessageEvent, TradeMessage } from "../src/core";
 
 import { Readable } from 'stream';
 

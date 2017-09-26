@@ -1,11 +1,10 @@
 {
-  "name": "gdax-trading-toolkit",
+  "name": "tlab-trading-toolkit",
   "version": "0.1.14",
   "description": "A trading toolkit for building advanced trading bots on the GDAX platform",
   "main": "build/src/index.js",
-  "types": "build/src/index.d.ts",
+  "types": "./declarations/src/index.d.ts",
   "scripts": {
-    "lint": "tslint -c tslint.json -p . -t stylish",
     "pretest": "yarn run build",
     "build": "tsc -d -p .",
     "coverage": "yarn run build && ./node_modules/.bin/nyc --reporter text-summary ./node_modules/.bin/mocha",
@@ -15,7 +14,8 @@
     "clean": "rm -fr build coverage .nyc_output",
     "doc": "./node_modules/.bin/typedoc --options typedoc.json .",
     "prepublishOnly": "yarn run build",
-    "build:browser" : "browserify build/src/browser.js -t [ babelify --presets [ es2015 ] ] -d -o dist/browser.js"
+    "generateDts": "dts-bundle --name GTT --main declarations/src/index.d.ts --out generated.d.ts --baseDir declarations --outputAsModuleFolder",
+    "build:browser": "browserify build/src/browser.js -t [ babelify --presets [ es2015 ] ] -d -o dist/browser.js"
   },
   "repository": {
     "type": "git",
@@ -51,6 +51,7 @@
     "ccxt": "^1.6.88",
     "commander": "2.9.0",
     "crypto": "0.0.3",
+    "dts-bundle": "0.7.3",
     "gdax": "0.3.1",
     "limiter": "git://github.com/jhurliman/node-rate-limiter.git#58ce2fda6b5c2bc4ccb81ba3768c5b1bc06c91a5",
     "node.bittrex.api": "0.5.1",

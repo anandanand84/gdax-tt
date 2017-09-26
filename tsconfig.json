@@ -12,6 +12,8 @@
     "outDir": "build",
     "sourceMap": true,
     "declaration": true,
+    "declarationDir": "./declarations",
+    "compileOnSave": true,
     "allowSyntheticDefaultImports": true 
   },
   "include": [
