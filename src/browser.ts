@@ -1,4 +1,3 @@
-import { setTimeout } from 'timers';
 import { LiveOrderbook, SnapshotMessage } from './core';
 import * as io from 'socket.io-client';
 import { Readable } from 'stream';
