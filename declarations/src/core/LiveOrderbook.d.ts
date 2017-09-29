@@ -18,7 +18,7 @@ import { BookBuilder, StartPoint } from '../lib/BookBuilder';
 import { Logger } from '../utils/Logger';
 import { Ticker } from '../exchanges/PublicExchangeAPI';
 import { Writable } from 'stream';
-export interface LiveBookConfig {
+export declare class LiveBookConfig {
     product: string;
     strictMode?: boolean;
     logger?: Logger;
@@ -71,7 +71,7 @@ export declare class LiveOrderbook extends Writable implements Orderbook {
      */
     ordersForValue(side: string, value: Biglike, useQuote: boolean, startPrice?: StartPoint): CumulativePriceLevel[];
     protected _read(): void;
-    protected _write(msg: any, encoding: string, callback: () => void): void;
+    _write(msg: any, encoding: string, callback: () => void): void;
     /**
      * Checks the given sequence number against the expected number for a message and returns a status result
      */

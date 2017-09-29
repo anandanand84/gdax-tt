@@ -58,7 +58,7 @@ export class BittrexFeed extends ExchangeFeed {
         }
         let index = 1;
         for (let product of products) {
-            if(index % 10 == 0) await wait(10000);
+            if(index % 10 == 0) await wait(15000);
             index++;
             this.client.call('CoreHub', 'SubscribeToExchangeDeltas', product).done((err: Error, result: boolean) => {
                 if (err) {
@@ -72,7 +72,12 @@ export class BittrexFeed extends ExchangeFeed {
             });
             this.client.call('CoreHub', 'queryExchangeState', product).done((err: Error, data: any) => {
                 const snapshot: SnapshotMessage = this.processSnapshot(product, data);
-                this.push(snapshot);
+                if(snapshot !== null) {
+                    this.push(snapshot);
+                }else {
+                    console.warn('Null received for snapshot for product ', product, 'raw message', data);
+                } 
+
             });
         }
         return true;
@@ -226,40 +231,47 @@ export class BittrexFeed extends ExchangeFeed {
     }
 
     private processSnapshot(product: string, state: BittrexExchangeState): SnapshotMessage {
-        let genericProduct = BittrexAPI.genericProduct(product);
-        const orders: OrderPool = {};
-        const snapshotMessage: SnapshotMessage = {
-            type: 'snapshot',
-            time: new Date(),
-            productId: genericProduct,
-            sequence: state.Nounce,
-            asks: [],
-            bids: [],
-            orderPool: orders
-        };
-        state.Buys.forEach((order: BittrexOrder) => {
-            addOrder(order, 'buy', snapshotMessage.bids);
-        });
-        state.Sells.forEach((order: BittrexOrder) => {
-            addOrder(order, 'sell', snapshotMessage.asks);
-        });
-        this.setSnapshotSequence(genericProduct, state.Nounce);
-        return snapshotMessage;
-
-        function addOrder(order: BittrexOrder, side: string, levelArray: PriceLevelWithOrders[]) {
-            const size = Big(order.Quantity);
-            const newOrder: Level3Order = {
-                id: String(order.Rate),
-                price: Big(order.Rate),
-                size: size,
-                side: side
-            };
-            const newLevel: PriceLevelWithOrders = {
-                price: newOrder.price,
-                totalSize: size,
-                orders: [newOrder]
-            };
-            levelArray.push(newLevel);
+        try {
+            if(state) {
+                let genericProduct = BittrexAPI.genericProduct(product);
+                const orders: OrderPool = {};
+                const snapshotMessage: SnapshotMessage = {
+                    type: 'snapshot',
+                    time: new Date(),
+                    productId: genericProduct,
+                    sequence: state.Nounce,
+                    asks: [],
+                    bids: [],
+                    orderPool: orders
+                };
+                state.Buys.forEach((order: BittrexOrder) => {
+                    addOrder(order, 'buy', snapshotMessage.bids);
+                });
+                state.Sells.forEach((order: BittrexOrder) => {
+                    addOrder(order, 'sell', snapshotMessage.asks);
+                });
+                this.setSnapshotSequence(genericProduct, state.Nounce);
+                return snapshotMessage;
+        
+                function addOrder(order: BittrexOrder, side: string, levelArray: PriceLevelWithOrders[]) {
+                    const size = Big(order.Quantity);
+                    const newOrder: Level3Order = {
+                        id: String(order.Rate),
+                        price: Big(order.Rate),
+                        size: size,
+                        side: side
+                    };
+                    const newLevel: PriceLevelWithOrders = {
+                        price: newOrder.price,
+                        totalSize: size,
+                        orders: [newOrder]
+                    };
+                    levelArray.push(newLevel);
+                }
+            }
+            return null;
+        }catch(err) {
+            return null;
         }
     }
 }

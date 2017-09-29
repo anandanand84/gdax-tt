@@ -1,4 +1,3 @@
-/// <reference types="node" />
 /***************************************************************************************************************************
  * @license                                                                                                                *
  * Copyright 2017 Coinbase, Inc.                                                                                           *
@@ -12,83 +11,14 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the                      *
  * License for the specific language governing permissions and limitations under the License.                              *
  ***************************************************************************************************************************/
-import { BigJS, Biglike } from '../lib/types';
-import { CumulativePriceLevel, Orderbook, OrderbookState } from '../lib/Orderbook';
-import { BookBuilder, StartPoint } from '../lib/BookBuilder';
-import { Logger } from '../utils/Logger';
-import { Ticker } from '../exchanges/PublicExchangeAPI';
-import { Writable } from 'stream';
-export interface LiveBookConfig {
-    product: string;
-    strictMode?: boolean;
-    logger?: Logger;
+import { RedisBookBuilder } from '../lib/RedisBookBuilder';
+import { Orderbook } from '../lib';
+import { LiveBookConfig, LiveOrderbook } from './';
+export declare class RedisBookConfig extends LiveBookConfig {
+    redisOptions: any;
+    exchange: string;
 }
-export declare enum SequenceStatus {
-    OK = 0,
-    ALREADY_PROCESSED = 1,
-    SKIP_DETECTED = 2,
-}
-export interface SkippedMessageEvent {
-    sequence: number;
-    expected_sequence: number;
-}
-/**
- * A live orderbook. This class maintains the state of an orderbook (using BookBuilder) in realtime by responding to
- * messages from attached feeds.
- */
-export declare class RedisBook extends Writable implements Orderbook {
-    readonly product: string;
-    readonly baseCurrency: string;
-    readonly quoteCurrency: string;
-    protected snapshotReceived: boolean;
-    protected strictMode: boolean;
-    protected lastBookUpdate: Date;
-    protected _book: BookBuilder;
-    protected liveTicker: Ticker;
-    protected _sourceSequence: number;
-    private logger;
-    constructor(config: LiveBookConfig);
-    log(level: string, message: string, meta?: any): void;
-    readonly sourceSequence: number;
-    readonly numAsks: number;
-    readonly numBids: number;
-    readonly bidsTotal: BigJS;
-    readonly asksTotal: BigJS;
-    state(): OrderbookState;
-    readonly book: BookBuilder;
-    readonly ticker: Ticker;
-    readonly sequence: number;
-    /**
-     */
-    readonly timeSinceTickerUpdate: number;
-    /**
-     * The time (in seconds) since the last orderbook update
-     */
-    readonly timeSinceOrderbookUpdate: number;
-    /**
-     * Return an array of (aggregated) orders whose sum is equal to or greater than `value`. The side parameter is from
-     * the perspective of the purchaser, so 'buy' returns asks and 'sell' bids.
-     */
-    ordersForValue(side: string, value: Biglike, useQuote: boolean, startPrice?: StartPoint): CumulativePriceLevel[];
-    protected _read(): void;
-    protected _write(msg: any, encoding: string, callback: () => void): void;
-    /**
-     * Checks the given sequence number against the expected number for a message and returns a status result
-     */
-    private checkSequence(sequence);
-    private updateTicker(tickerMessage);
-    private processSnapshot(snapshot);
-    /**
-     * Handles order messages from aggregated books
-     * @param msg
-     */
-    private processLevelChange(msg);
-    /**
-     * Processes order messages from order-level books.
-     */
-    private processLevel3Messages(message);
-    private processNewOrderMessage(msg);
-    private processDoneMessage(msg);
-    private processChangedOrderMessage(msg);
-    private emitError(message?);
+export declare class RedisBook extends LiveOrderbook implements Orderbook {
+    protected _book: RedisBookBuilder;
+    constructor(config: RedisBookConfig);
 }

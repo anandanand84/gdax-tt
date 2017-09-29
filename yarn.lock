@@ -20,10 +20,21 @@
   version "3.1.32"
   resolved "https://registry.yarnpkg.com/@types/crypto-js/-/crypto-js-3.1.32.tgz#e2f3003d19a1a500d1b7eba5d4ea0d1d77b9bbd5"
 
+"@types/detect-indent@0.1.30":
+  version "0.1.30"
+  resolved "https://registry.yarnpkg.com/@types/detect-indent/-/detect-indent-0.1.30.tgz#dc682bb412b4e65ba098e70edad73b4833fb910d"
+
 "@types/fs-extra@^4.0.0":
   version "4.0.0"
   resolved "https://registry.yarnpkg.com/@types/fs-extra/-/fs-extra-4.0.0.tgz#1dd742ad5c9bce308f7a52d02ebc01421bc9102f"
   dependencies:
+    "@types/node" "*"
+
+"@types/glob@5.0.30":
+  version "5.0.30"
+  resolved "https://registry.yarnpkg.com/@types/glob/-/glob-5.0.30.tgz#1026409c5625a8689074602808d082b2867b8a51"
+  dependencies:
+    "@types/minimatch" "*"
     "@types/node" "*"
 
 "@types/handlebars@^4.0.31":
@@ -34,6 +45,12 @@
   version "9.1.9"
   resolved "https://registry.yarnpkg.com/@types/highlight.js/-/highlight.js-9.1.9.tgz#ed6336955eaf233b75eb7923b9b1f373d045ef01"
 
+"@types/ioredis@0.0.25":
+  version "0.0.25"
+  resolved "https://registry.yarnpkg.com/@types/ioredis/-/ioredis-0.0.25.tgz#e3484c3ccc1bdf3bd310e413a3ce6f721018fbd2"
+  dependencies:
+    "@types/node" "*"
+
 "@types/lodash@^4.14.37":
   version "4.14.71"
   resolved "https://registry.yarnpkg.com/@types/lodash/-/lodash-4.14.71.tgz#0dc383f78981216ac76e2f2c3afd998e0450e4c1"
@@ -42,9 +59,17 @@
   version "0.0.28"
   resolved "https://registry.yarnpkg.com/@types/marked/-/marked-0.0.28.tgz#44ba754e9fa51432583e8eb30a7c4dd249b52faa"
 
+"@types/minimatch@*":
+  version "3.0.1"
+  resolved "https://registry.yarnpkg.com/@types/minimatch/-/minimatch-3.0.1.tgz#b683eb60be358304ef146f5775db4c0e3696a550"
+
 "@types/minimatch@^2.0.29":
   version "2.0.29"
   resolved "https://registry.yarnpkg.com/@types/minimatch/-/minimatch-2.0.29.tgz#5002e14f75e2d71e564281df0431c8c1b4a2a36a"
+
+"@types/mkdirp@0.3.29":
+  version "0.3.29"
+  resolved "https://registry.yarnpkg.com/@types/mkdirp/-/mkdirp-0.3.29.tgz#7f2ad7ec55f914482fc9b1ec4bb1ae6028d46066"
 
 "@types/mocha@2.2.33":
   version "2.2.33"
@@ -59,6 +84,10 @@
 "@types/node@*", "@types/node@6.0.51":
   version "6.0.51"
   resolved "https://registry.yarnpkg.com/@types/node/-/node-6.0.51.tgz#84cbf25111516ec9304d0b61469dc0fa9d12ba32"
+
+"@types/node@8.0.0":
+  version "8.0.0"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-8.0.0.tgz#acaa89247afddc7967e9902fd11761dadea1a555"
 
 "@types/query-string@3.0.30":
   version "3.0.30"
@@ -677,6 +706,10 @@ base64-arraybuffer@0.1.5:
   version "0.1.5"
   resolved "https://registry.yarnpkg.com/base64-arraybuffer/-/base64-arraybuffer-0.1.5.tgz#73926771923b5a19747ad666aa5cd4bf9c6e9ce8"
 
+base64-js@0.0.2:
+  version "0.0.2"
+  resolved "https://registry.yarnpkg.com/base64-js/-/base64-js-0.0.2.tgz#024f0f72afa25b75f9c0ee73cd4f55ec1bed9784"
+
 base64id@1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/base64id/-/base64id-1.0.0.tgz#47688cb99bb6804f0e06d3e763b1c32e57d8e6b6"
@@ -686,6 +719,10 @@ bcrypt-pbkdf@^1.0.0:
   resolved "https://registry.yarnpkg.com/bcrypt-pbkdf/-/bcrypt-pbkdf-1.0.1.tgz#63bc5dcb61331b92bc05fd528953c33462a06f8d"
   dependencies:
     tweetnacl "^0.14.3"
+
+benchmark@1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/benchmark/-/benchmark-1.0.0.tgz#2f1e2fa4c359f11122aa183082218e957e390c73"
 
 better-assert@~1.0.0:
   version "1.0.2"
@@ -721,6 +758,10 @@ blob@0.0.4:
   version "0.0.4"
   resolved "https://registry.yarnpkg.com/blob/-/blob-0.0.4.tgz#bcf13052ca54463f30f9fc7e95b9a47630a94921"
 
+bluebird@^3.3.4:
+  version "3.5.0"
+  resolved "https://registry.yarnpkg.com/bluebird/-/bluebird-3.5.0.tgz#791420d7f551eea2897453a8a77653f96606d67c"
+
 bn.js@^4.0.0, bn.js@^4.1.0, bn.js@^4.1.1, bn.js@^4.4.0:
   version "4.11.8"
   resolved "https://registry.yarnpkg.com/bn.js/-/bn.js-4.11.8.tgz#2cde09eb5ee341f484746bb0309b3253b1b1442f"
@@ -730,6 +771,13 @@ boom@2.x.x:
   resolved "https://registry.yarnpkg.com/boom/-/boom-2.10.1.tgz#39c8918ceff5799f83f9492a848f625add0c766f"
   dependencies:
     hoek "2.x.x"
+
+bops@~0.0.6:
+  version "0.0.7"
+  resolved "https://registry.yarnpkg.com/bops/-/bops-0.0.7.tgz#b4a0a5a839a406454af0fe05a8b91a7a766a54e2"
+  dependencies:
+    base64-js "0.0.2"
+    to-utf8 "0.0.1"
 
 brace-expansion@^1.1.7:
   version "1.1.8"
@@ -930,6 +978,10 @@ clone@~0.1.9:
   version "0.1.19"
   resolved "https://registry.yarnpkg.com/clone/-/clone-0.1.19.tgz#613fb68639b26a494ac53253e15b1a6bd88ada85"
 
+cluster-key-slot@^1.0.6:
+  version "1.0.8"
+  resolved "https://registry.yarnpkg.com/cluster-key-slot/-/cluster-key-slot-1.0.8.tgz#7654556085a65330932a2e8b5976f8e2d0b3e414"
+
 co@^4.6.0:
   version "4.6.0"
   resolved "https://registry.yarnpkg.com/co/-/co-4.6.0.tgz#6ea6bdf3d853ae54ccb8e47bfa0bf3f9031fb184"
@@ -979,6 +1031,10 @@ commondir@^1.0.1:
 component-bind@1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/component-bind/-/component-bind-1.0.0.tgz#00c608ab7dcd93897c0009651b1d3a8e1e73bbd1"
+
+component-emitter@1.1.2:
+  version "1.1.2"
+  resolved "https://registry.yarnpkg.com/component-emitter/-/component-emitter-1.1.2.tgz#296594f2753daa63996d2af08d15a95116c9aec3"
 
 component-emitter@1.2.1, component-emitter@^1.2.0:
   version "1.2.1"
@@ -1163,6 +1219,10 @@ delayed-stream@~1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/delayed-stream/-/delayed-stream-1.0.0.tgz#df3ae199acadfb7d440aaae0b29e2272b24ec619"
 
+denque@^1.1.0:
+  version "1.2.2"
+  resolved "https://registry.yarnpkg.com/denque/-/denque-1.2.2.tgz#e06cf7cf0da8badc88cbdaabf8fc0a70d659f1d4"
+
 depd@1.1.1, depd@~1.1.1:
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/depd/-/depd-1.1.1.tgz#5783b4e1c459f06fa5ca27f991f3d06e7a310359"
@@ -1177,6 +1237,13 @@ des.js@^1.0.0:
 destroy@~1.0.4:
   version "1.0.4"
   resolved "https://registry.yarnpkg.com/destroy/-/destroy-1.0.4.tgz#978857442c44749e4206613e37946205826abd80"
+
+detect-indent@^0.2.0:
+  version "0.2.0"
+  resolved "https://registry.yarnpkg.com/detect-indent/-/detect-indent-0.2.0.tgz#042914498979ac2d9f3c73e4ff3e6877d3bc92b6"
+  dependencies:
+    get-stdin "^0.1.0"
+    minimist "^0.1.0"
 
 detect-indent@^4.0.0:
   version "4.0.0"
@@ -1199,6 +1266,23 @@ diffie-hellman@^5.0.0:
     bn.js "^4.1.0"
     miller-rabin "^4.0.0"
     randombytes "^2.0.0"
+
+double-ended-queue@^2.1.0-0:
+  version "2.1.0-0"
+  resolved "https://registry.yarnpkg.com/double-ended-queue/-/double-ended-queue-2.1.0-0.tgz#103d3527fd31528f40188130c841efdd78264e5c"
+
+dts-bundle@0.7.3:
+  version "0.7.3"
+  resolved "https://registry.yarnpkg.com/dts-bundle/-/dts-bundle-0.7.3.tgz#372b7bb69c820782e6382f400739a69dced3d59a"
+  dependencies:
+    "@types/detect-indent" "0.1.30"
+    "@types/glob" "5.0.30"
+    "@types/mkdirp" "0.3.29"
+    "@types/node" "8.0.0"
+    commander "^2.9.0"
+    detect-indent "^0.2.0"
+    glob "^6.0.4"
+    mkdirp "^0.5.0"
 
 duplexer@~0.1.1:
   version "0.1.1"
@@ -1455,6 +1539,10 @@ find-up@^2.0.0, find-up@^2.1.0:
   dependencies:
     locate-path "^2.0.0"
 
+flexbuffer@0.0.6:
+  version "0.0.6"
+  resolved "https://registry.yarnpkg.com/flexbuffer/-/flexbuffer-0.0.6.tgz#039fdf23f8823e440c38f3277e6fef1174215b30"
+
 for-in@^1.0.1:
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/for-in/-/for-in-1.0.2.tgz#81068d295a8142ec0ac726c6e2200c30fb6d5e80"
@@ -1566,6 +1654,10 @@ get-caller-file@^1.0.1:
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/get-caller-file/-/get-caller-file-1.0.2.tgz#f702e63127e7e231c160a80c1554acb70d5047e5"
 
+get-stdin@^0.1.0:
+  version "0.1.0"
+  resolved "https://registry.yarnpkg.com/get-stdin/-/get-stdin-0.1.0.tgz#5998af24aafc802d15c82c685657eeb8b10d4a91"
+
 get-stream@^3.0.0:
   version "3.0.0"
   resolved "https://registry.yarnpkg.com/get-stream/-/get-stream-3.0.0.tgz#8e943d1358dc37555054ecbe2edb05aa174ede14"
@@ -1597,6 +1689,16 @@ glob@7.0.5, glob@^7.0.0:
     inflight "^1.0.4"
     inherits "2"
     minimatch "^3.0.2"
+    once "^1.3.0"
+    path-is-absolute "^1.0.0"
+
+glob@^6.0.4:
+  version "6.0.4"
+  resolved "https://registry.yarnpkg.com/glob/-/glob-6.0.4.tgz#0f08860f6a155127b2fadd4f9ce24b1aab6e4d22"
+  dependencies:
+    inflight "^1.0.4"
+    inherits "2"
+    minimatch "2 || 3"
     once "^1.3.0"
     path-is-absolute "^1.0.0"
 
@@ -1668,6 +1770,12 @@ has-binary2@~1.0.2:
   resolved "https://registry.yarnpkg.com/has-binary2/-/has-binary2-1.0.2.tgz#e83dba49f0b9be4d026d27365350d9f03f54be98"
   dependencies:
     isarray "2.0.1"
+
+has-binary@0.1.7:
+  version "0.1.7"
+  resolved "https://registry.yarnpkg.com/has-binary/-/has-binary-0.1.7.tgz#68e61eb16210c9545a0a5cce06a873912fe1e68c"
+  dependencies:
+    isarray "0.0.1"
 
 has-cors@1.1.0:
   version "1.1.0"
@@ -1794,6 +1902,34 @@ invariant@^2.2.2:
 invert-kv@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/invert-kv/-/invert-kv-1.0.0.tgz#104a8e4aaca6d3d8cd157a8ef8bfab2d7a3ffdb6"
+
+ioredis@3.1.4:
+  version "3.1.4"
+  resolved "https://registry.yarnpkg.com/ioredis/-/ioredis-3.1.4.tgz#8688293f5f2f1757e1c812ad17cce49f46d811bc"
+  dependencies:
+    bluebird "^3.3.4"
+    cluster-key-slot "^1.0.6"
+    debug "^2.2.0"
+    denque "^1.1.0"
+    flexbuffer "0.0.6"
+    lodash.assign "^4.2.0"
+    lodash.bind "^4.2.1"
+    lodash.clone "^4.5.0"
+    lodash.clonedeep "^4.5.0"
+    lodash.defaults "^4.2.0"
+    lodash.difference "^4.5.0"
+    lodash.flatten "^4.4.0"
+    lodash.foreach "^4.5.0"
+    lodash.isempty "^4.4.0"
+    lodash.keys "^4.2.0"
+    lodash.noop "^3.0.1"
+    lodash.partial "^4.2.1"
+    lodash.pick "^4.4.0"
+    lodash.sample "^4.2.1"
+    lodash.shuffle "^4.2.0"
+    lodash.values "^4.3.0"
+    redis-commands "^1.2.0"
+    redis-parser "^2.4.0"
 
 ipaddr.js@1.4.0:
   version "1.4.0"
@@ -2254,6 +2390,22 @@ lodash.assign@3.0.0:
     lodash._baseassign "^3.0.0"
     lodash._createassigner "^3.0.0"
 
+lodash.assign@^4.2.0:
+  version "4.2.0"
+  resolved "https://registry.yarnpkg.com/lodash.assign/-/lodash.assign-4.2.0.tgz#0d99f3ccd7a6d261d19bdaeb9245005d285808e7"
+
+lodash.bind@^4.2.1:
+  version "4.2.1"
+  resolved "https://registry.yarnpkg.com/lodash.bind/-/lodash.bind-4.2.1.tgz#7ae3017e939622ac31b7d7d7dcb1b34db1690d35"
+
+lodash.clone@^4.5.0:
+  version "4.5.0"
+  resolved "https://registry.yarnpkg.com/lodash.clone/-/lodash.clone-4.5.0.tgz#195870450f5a13192478df4bc3d23d2dea1907b6"
+
+lodash.clonedeep@^4.5.0:
+  version "4.5.0"
+  resolved "https://registry.yarnpkg.com/lodash.clonedeep/-/lodash.clonedeep-4.5.0.tgz#e23f3f9c4f8fbdde872529c1071857a086e5ccef"
+
 lodash.create@3.1.1:
   version "3.1.1"
   resolved "https://registry.yarnpkg.com/lodash.create/-/lodash.create-3.1.1.tgz#d7f2849f0dbda7e04682bb8cd72ab022461debe7"
@@ -2261,6 +2413,18 @@ lodash.create@3.1.1:
     lodash._baseassign "^3.0.0"
     lodash._basecreate "^3.0.0"
     lodash._isiterateecall "^3.0.0"
+
+lodash.defaults@^4.2.0:
+  version "4.2.0"
+  resolved "https://registry.yarnpkg.com/lodash.defaults/-/lodash.defaults-4.2.0.tgz#d09178716ffea4dde9e5fb7b37f6f0802274580c"
+
+lodash.difference@^4.5.0:
+  version "4.5.0"
+  resolved "https://registry.yarnpkg.com/lodash.difference/-/lodash.difference-4.5.0.tgz#9ccb4e505d486b91651345772885a2df27fd017c"
+
+lodash.flatten@^4.4.0:
+  version "4.4.0"
+  resolved "https://registry.yarnpkg.com/lodash.flatten/-/lodash.flatten-4.4.0.tgz#f31c22225a9632d2bbf8e4addbef240aa765a61f"
 
 lodash.foreach@3.0.0:
   version "3.0.0"
@@ -2271,6 +2435,10 @@ lodash.foreach@3.0.0:
     lodash._bindcallback "^3.0.0"
     lodash.isarray "^3.0.0"
 
+lodash.foreach@^4.5.0:
+  version "4.5.0"
+  resolved "https://registry.yarnpkg.com/lodash.foreach/-/lodash.foreach-4.5.0.tgz#1a6a35eace401280c7f06dddec35165ab27e3e53"
+
 lodash.isarguments@^3.0.0:
   version "3.1.0"
   resolved "https://registry.yarnpkg.com/lodash.isarguments/-/lodash.isarguments-3.1.0.tgz#2f573d85c6a24289ff00663b491c1d338ff3458a"
@@ -2278,6 +2446,10 @@ lodash.isarguments@^3.0.0:
 lodash.isarray@^3.0.0:
   version "3.0.4"
   resolved "https://registry.yarnpkg.com/lodash.isarray/-/lodash.isarray-3.0.4.tgz#79e4eb88c36a8122af86f844aa9bcd851b5fbb55"
+
+lodash.isempty@^4.4.0:
+  version "4.4.0"
+  resolved "https://registry.yarnpkg.com/lodash.isempty/-/lodash.isempty-4.4.0.tgz#6f86cbedd8be4ec987be9aaf33c9684db1b31e7e"
 
 lodash.keys@^3.0.0:
   version "3.1.2"
@@ -2287,6 +2459,14 @@ lodash.keys@^3.0.0:
     lodash.isarguments "^3.0.0"
     lodash.isarray "^3.0.0"
 
+lodash.keys@^4.2.0:
+  version "4.2.0"
+  resolved "https://registry.yarnpkg.com/lodash.keys/-/lodash.keys-4.2.0.tgz#a08602ac12e4fb83f91fc1fb7a360a4d9ba35205"
+
+lodash.noop@^3.0.1:
+  version "3.0.1"
+  resolved "https://registry.yarnpkg.com/lodash.noop/-/lodash.noop-3.0.1.tgz#38188f4d650a3a474258439b96ec45b32617133c"
+
 lodash.partial@3.0.0:
   version "3.0.0"
   resolved "https://registry.yarnpkg.com/lodash.partial/-/lodash.partial-3.0.0.tgz#1fa9a03307aa283bb8d4f15abdee0f2f40090a96"
@@ -2295,9 +2475,29 @@ lodash.partial@3.0.0:
     lodash._createwrapper "^3.0.0"
     lodash._replaceholders "^3.0.0"
 
+lodash.partial@^4.2.1:
+  version "4.2.1"
+  resolved "https://registry.yarnpkg.com/lodash.partial/-/lodash.partial-4.2.1.tgz#49f3d8cfdaa3bff8b3a91d127e923245418961d4"
+
+lodash.pick@^4.4.0:
+  version "4.4.0"
+  resolved "https://registry.yarnpkg.com/lodash.pick/-/lodash.pick-4.4.0.tgz#52f05610fff9ded422611441ed1fc123a03001b3"
+
 lodash.restparam@^3.0.0:
   version "3.6.1"
   resolved "https://registry.yarnpkg.com/lodash.restparam/-/lodash.restparam-3.6.1.tgz#936a4e309ef330a7645ed4145986c85ae5b20805"
+
+lodash.sample@^4.2.1:
+  version "4.2.1"
+  resolved "https://registry.yarnpkg.com/lodash.sample/-/lodash.sample-4.2.1.tgz#5e4291b0c753fa1abeb0aab8fb29df1b66f07f6d"
+
+lodash.shuffle@^4.2.0:
+  version "4.2.0"
+  resolved "https://registry.yarnpkg.com/lodash.shuffle/-/lodash.shuffle-4.2.0.tgz#145b5053cf875f6f5c2a33f48b6e9948c6ec7b4b"
+
+lodash.values@^4.3.0:
+  version "4.3.0"
+  resolved "https://registry.yarnpkg.com/lodash.values/-/lodash.values-4.3.0.tgz#a3a6c2b0ebecc5c2cba1c17e6e620fe81b53d347"
 
 lodash@2.4.1:
   version "2.4.1"
@@ -2456,7 +2656,7 @@ minimalistic-crypto-utils@^1.0.0, minimalistic-crypto-utils@^1.0.1:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/minimalistic-crypto-utils/-/minimalistic-crypto-utils-1.0.1.tgz#f6c00c1c0b082246e5c4d99dfb8c7c083b2b582a"
 
-minimatch@^3.0.0, minimatch@^3.0.2, minimatch@^3.0.4:
+"minimatch@2 || 3", minimatch@^3.0.0, minimatch@^3.0.2, minimatch@^3.0.4:
   version "3.0.4"
   resolved "https://registry.yarnpkg.com/minimatch/-/minimatch-3.0.4.tgz#5166e286457f03306064be5497e8dbb0c3d32083"
   dependencies:
@@ -2465,6 +2665,10 @@ minimatch@^3.0.0, minimatch@^3.0.2, minimatch@^3.0.4:
 minimist@0.0.8, minimist@~0.0.1:
   version "0.0.8"
   resolved "https://registry.yarnpkg.com/minimist/-/minimist-0.0.8.tgz#857fcabfc3397d2625b8228262e86aa7a011b05d"
+
+minimist@^0.1.0:
+  version "0.1.0"
+  resolved "https://registry.yarnpkg.com/minimist/-/minimist-0.1.0.tgz#99df657a52574c21c9057497df742790b2b4c0de"
 
 minimist@^1.2.0:
   version "1.2.0"
@@ -2499,6 +2703,12 @@ ms@0.7.1:
 ms@2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/ms/-/ms-2.0.0.tgz#5608aeadfc00be6c2901df5f9861788de0d597c8"
+
+msgpack-js@0.3.0:
+  version "0.3.0"
+  resolved "https://registry.yarnpkg.com/msgpack-js/-/msgpack-js-0.3.0.tgz#030ec08c5956f9ca7d17d40a572d5396fec10923"
+  dependencies:
+    bops "~0.0.6"
 
 nan@^2.3.3:
   version "2.6.2"
@@ -3006,6 +3216,29 @@ rechoir@^0.6.2:
   dependencies:
     resolve "^1.1.6"
 
+redis-commands@^1.0.1, redis-commands@^1.2.0:
+  version "1.3.1"
+  resolved "https://registry.yarnpkg.com/redis-commands/-/redis-commands-1.3.1.tgz#81d826f45fa9c8b2011f4cd7a0fe597d241d442b"
+
+redis-parser@^2.4.0, redis-parser@^2.6.0:
+  version "2.6.0"
+  resolved "https://registry.yarnpkg.com/redis-parser/-/redis-parser-2.6.0.tgz#52ed09dacac108f1a631c07e9b69941e7a19504b"
+
+redis@2.4.2:
+  version "2.4.2"
+  resolved "https://registry.yarnpkg.com/redis/-/redis-2.4.2.tgz#2f9160255a26a6cad2b79bf0847e067280a146ea"
+  dependencies:
+    double-ended-queue "^2.1.0-0"
+    redis-commands "^1.0.1"
+
+redis@2.8.0:
+  version "2.8.0"
+  resolved "https://registry.yarnpkg.com/redis/-/redis-2.8.0.tgz#202288e3f58c49f6079d97af7a10e1303ae14b02"
+  dependencies:
+    double-ended-queue "^2.1.0-0"
+    redis-commands "^1.2.0"
+    redis-parser "^2.6.0"
+
 regenerate@^1.2.1:
   version "1.3.3"
   resolved "https://registry.yarnpkg.com/regenerate/-/regenerate-1.3.3.tgz#0c336d3980553d755c39b586ae3b20aa49c82b7f"
@@ -3350,6 +3583,26 @@ socket.io-client@^2.0.3, socket.io-client@~2.0.2:
     socket.io-parser "~3.1.1"
     to-array "0.1.4"
 
+socket.io-emitter@^1.0.0:
+  version "1.1.0"
+  resolved "https://registry.yarnpkg.com/socket.io-emitter/-/socket.io-emitter-1.1.0.tgz#ae1e1ef84ee19c590842c3e281ccdb6cfd1c149d"
+  dependencies:
+    debug "2.2.0"
+    has-binary "0.1.7"
+    msgpack-js "0.3.0"
+    redis "2.4.2"
+    socket.io-parser "2.2.6"
+
+socket.io-parser@2.2.6:
+  version "2.2.6"
+  resolved "https://registry.yarnpkg.com/socket.io-parser/-/socket.io-parser-2.2.6.tgz#38dfd61df50dcf8ab1d9e2091322bf902ba28b99"
+  dependencies:
+    benchmark "1.0.0"
+    component-emitter "1.1.2"
+    debug "2.2.0"
+    isarray "0.0.1"
+    json3 "3.3.2"
+
 socket.io-parser@~3.1.1:
   version "3.1.2"
   resolved "https://registry.yarnpkg.com/socket.io-parser/-/socket.io-parser-3.1.2.tgz#dbc2282151fc4faebbe40aeedc0772eba619f7f2"
@@ -3559,6 +3812,40 @@ through@2, "through@>=2.2.7 <3", through@~2.3, through@~2.3.1:
   version "2.3.8"
   resolved "https://registry.yarnpkg.com/through/-/through-2.3.8.tgz#0dd4c9ffaabc357960b1b724115d7e0e86a2e1f5"
 
+tlab-trading-toolkit@^0.1.14:
+  version "0.1.14"
+  resolved "https://registry.yarnpkg.com/tlab-trading-toolkit/-/tlab-trading-toolkit-0.1.14.tgz#e2e54aef257dfb3bb7adf8d51d02c661daae4217"
+  dependencies:
+    "@types/bignumber.js" "4.0.2"
+    "@types/bintrees" "1.0.2"
+    "@types/commander" "2.3.31"
+    "@types/crypto-js" "3.1.32"
+    "@types/mocha" "2.2.33"
+    "@types/nock" "8.2.0"
+    "@types/node" "6.0.51"
+    "@types/query-string" "3.0.30"
+    "@types/simple-mock" "0.0.27"
+    "@types/socket.io-client" "^1.4.30"
+    "@types/superagent" "2.0.35"
+    "@types/uuid" "2.0.29"
+    "@types/winston" "2.2.0"
+    "@types/ws" "0.0.37"
+    bignumber.js "4.0.2"
+    bintrees "1.0.1"
+    ccxt "^1.6.88"
+    commander "2.9.0"
+    crypto "0.0.3"
+    dts-bundle "0.7.3"
+    gdax "0.3.1"
+    limiter "git://github.com/jhurliman/node-rate-limiter.git#58ce2fda6b5c2bc4ccb81ba3768c5b1bc06c91a5"
+    node.bittrex.api "0.5.1"
+    pushbullet "2.0.0"
+    querystring "0.2.0"
+    simple-mock "0.8.0"
+    superagent "3.0.0"
+    winston "2.3.0"
+    ws "1.1.1"
+
 to-array@0.1.4:
   version "0.1.4"
   resolved "https://registry.yarnpkg.com/to-array/-/to-array-0.1.4.tgz#17e6c11f73dd4f3d74cda7a4ff3238e9ad9bf890"
@@ -3566,6 +3853,10 @@ to-array@0.1.4:
 to-fast-properties@^1.0.3:
   version "1.0.3"
   resolved "https://registry.yarnpkg.com/to-fast-properties/-/to-fast-properties-1.0.3.tgz#b83571fa4d8c25b82e231b06e3a3055de4ca1a47"
+
+to-utf8@0.0.1:
+  version "0.0.1"
+  resolved "https://registry.yarnpkg.com/to-utf8/-/to-utf8-0.0.1.tgz#d17aea72ff2fba39b9e43601be7b3ff72e089852"
 
 tough-cookie@~2.3.0:
   version "2.3.2"

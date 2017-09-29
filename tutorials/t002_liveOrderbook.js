@@ -1,16 +1,3 @@
-/***************************************************************************************************************************
- * @license                                                                                                                *
- * Copyright 2017 Coinbase, Inc.                                                                                           *
- *                                                                                                                         *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance          *
- * with the License. You may obtain a copy of the License at                                                               *
- *                                                                                                                         *
- * http://www.apache.org/licenses/LICENSE-2.0                                                                              *
- *                                                                                                                         *
- * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on     *
- * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the                      *
- * License for the specific language governing permissions and limitations under the License.                              *
- ***************************************************************************************************************************/
 "use strict";
 var __extends = (this && this.__extends) || (function () {
     var extendStatics = Object.setPrototypeOf ||
@@ -58,60 +45,46 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 exports.__esModule = true;
+/***************************************************************************************************************************
+ * @license                                                                                                                *
+ * Copyright 2017 Coinbase, Inc.                                                                                           *
+ *                                                                                                                         *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance          *
+ * with the License. You may obtain a copy of the License at                                                               *
+ *                                                                                                                         *
+ * http://www.apache.org/licenses/LICENSE-2.0                                                                              *
+ *                                                                                                                         *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on     *
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the                      *
+ * License for the specific language governing permissions and limitations under the License.                              *
+ ***************************************************************************************************************************/
 var GTT = require("..");
-var ProductMap_1 = require("../build/src/exchanges/ProductMap");
-var core_1 = require("../build/src/core");
-var express = require('express');
-var app = express();
-var server = require('http').Server(app);
-var io = require('socket.io')(server);
-io.set('transports', ['websocket']);
+var RedisBook_1 = require("../src/core/RedisBook");
 var stream_1 = require("stream");
+var redisPort = 6379;
+var redisHost = 'localhost';
+var redisPassword = 'none';
+var nodeRedis = require('redis');
+var redis = nodeRedis.createClient(redisPort, redisHost, { auth_pass: redisPassword });
+;
+var io = require('socket.io-emitter')(redis);
+var EXCHANGE = process.env.Exchange || "GDAX";
 var orderBooks = new Map();
-io.of('/quotes').on('connection', function (socket) {
-    socket.on('snapshot', function (product) {
-        var book = orderBooks.get(product);
-        var state = book.state();
-        //StreamMessage
-        state.type = "snapshot";
-        state.time = state.lastBookUpdate;
-        //SnapshotMessage
-        state.productId = product;
-        io.of('/quotes').to(product).emit('snapshot', state);
-    });
-    socket.on('subscribe', function (product) {
-        socket.join(product);
-    });
-    socket.on('unsubscribe', function (product) {
-        socket.leave(product);
-    });
-});
 var SocketStream = (function (_super) {
     __extends(SocketStream, _super);
     function SocketStream() {
         return _super !== null && _super.apply(this, arguments) || this;
     }
     SocketStream.prototype.write = function (msg, callback) {
-        if (msg.type === 'snapshot') {
-            io.of('/quotes').to(msg.productId).emit('snapshot', msg);
-            return true;
-        }
-        io.of('/quotes').to(msg.productId).emit('stream', msg);
+        msg.exchange = EXCHANGE;
+        var room = msg.exchange + ":" + msg.productId;
+        var type = 'stream';
+        io.of('/api/quotes').to(room).emit(type, Object.assign({}, msg, { productId: room }));
         return true;
     };
     return SocketStream;
 }(stream_1.Writable));
-server.listen(3250, function () {
-    console.log('Server listening in 3250');
-});
-// const products = ['BTC/USDT'];
 var logger = GTT.utils.ConsoleLoggerFactory({ level: 'debug' });
-// const printOrderbook = GTT.utils.printOrderbook;
-var printTicker = GTT.utils.printTicker;
-/*
- Simple demo that sets up a live order book and then periodically prints some stats to the console.
- */
-var EXCHANGE = process.env.Exchange || "Bittrex";
 function start() {
     return __awaiter(this, void 0, void 0, function () {
         var tradeVolume, products, factories, socketStream;
@@ -119,25 +92,29 @@ function start() {
             switch (_a.label) {
                 case 0:
                     tradeVolume = 0;
-                    return [4 /*yield*/, ProductMap_1.ProductMap.configureExchange(EXCHANGE)];
+                    console.log('Configuring Exchange ', EXCHANGE);
+                    return [4 /*yield*/, GTT.Exchanges.ProductMap.configureExchange(EXCHANGE)];
                 case 1:
                     _a.sent();
-                    products = ['BTC/USDT', 'ETH/USDT', 'LTC/USDT', 'NEO/BTC'] //await ProductMap.ExchangeMap.get(EXCHANGE).getAvailableProducts();
-                    ;
-                    // products = products.slice(1, 50);
+                    return [4 /*yield*/, GTT.Exchanges.ProductMap.ExchangeMap.get(EXCHANGE).getAvailableProducts()];
+                case 2:
+                    products = _a.sent();
                     console.log('Total available products', products.length);
                     factories = GTT.Factories;
                     socketStream = new SocketStream();
                     factories[EXCHANGE].FeedFactory(logger, products).then(function (feed) {
                         // Configure the live book object
-                        console.log('Feed started');
-                        var count = 1;
+                        console.log('Feed started for exchange ', EXCHANGE);
                         products.forEach(function (product) {
                             var config = {
                                 product: product,
-                                logger: logger
+                                logger: logger,
+                                exchange: EXCHANGE,
+                                redisOptions: {
+                                    port: 6379
+                                }
                             };
-                            var book = new core_1.LiveOrderbook(config);
+                            var book = new RedisBook_1.RedisBook(config);
                             book.on('LiveOrderbook.snapshot', function () {
                                 // logger.log('info', 'Snapshot received by LiveOrderbook Demo for '+product);
                             });

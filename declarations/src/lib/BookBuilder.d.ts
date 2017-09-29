@@ -69,7 +69,7 @@ export declare class BookBuilder extends EventEmitter implements Orderbook {
     protected _bidsValueTotal: BigJS;
     protected _asksTotal: BigJS;
     protected _asksValueTotal: BigJS;
-    private _orderPool;
+    protected _orderPool: OrderPool;
     private logger;
     constructor(logger: Logger);
     clear(): void;
@@ -131,6 +131,6 @@ export declare class BookBuilder extends EventEmitter implements Orderbook {
      */
     ordersForValue(side: string, value: BigJS, useQuote: boolean, start?: StartPoint): CumulativePriceLevel[];
     protected removeFromPool(orderId: string): boolean;
-    private subtractFromTotal(amount, side, price);
-    private addToTotal(amount, side, price);
+    protected subtractFromTotal(amount: BigJS, side: string, price: BigJS): void;
+    protected addToTotal(amount: BigJS, side: string, price: BigJS): void;
 }

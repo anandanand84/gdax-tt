@@ -295,7 +295,7 @@ export class GDAXFeed extends ExchangeFeed {
                 size: newSize,
                 count: 1,
                 sequence: this.getSequence(product),
-                productId: this.mapProduct(update.product_id),
+                productId: product,
                 side: side
             };
             this.pushMessage(message);
@@ -382,15 +382,16 @@ export class GDAXFeed extends ExchangeFeed {
                     newSize: change.new_size
                 } as ChangedOrderMessage;
             default:
-            console.dir("Unknown message for product id ", feedMessage.product_id)
+            console.dir("Unknown message for product id ", feedMessage.product_id, feedMessage.type)
             console.log(feedMessage)
-                return {
-                    type: 'unknown',
-                    time: new Date(),
-                    sequence: (feedMessage as any).sequence,
-                    productId: this.mapProduct(feedMessage.product_id),
-                    message: feedMessage
-                } as UnknownMessage;
+                // return {
+                //     type: 'unknown',
+                //     time: new Date(),
+                //     sequence: (feedMessage as any).sequence,
+                //     productId: this.mapProduct(feedMessage.product_id),
+                //     message: feedMessage
+                // } as UnknownMessage;
+                return null;
         }
     }
 

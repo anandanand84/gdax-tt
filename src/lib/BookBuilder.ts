@@ -151,7 +151,7 @@ export class BookBuilder extends EventEmitter implements Orderbook {
     protected _bidsValueTotal: BigJS = ZERO;
     protected _asksTotal: BigJS = ZERO;
     protected _asksValueTotal: BigJS = ZERO;
-    private _orderPool: OrderPool = {};
+    protected _orderPool: OrderPool = {};
     private logger: Logger;
 
     constructor(logger: Logger) {
@@ -464,7 +464,7 @@ export class BookBuilder extends EventEmitter implements Orderbook {
         return exists;
     }
 
-    private subtractFromTotal(amount: BigJS, side: string, price: BigJS) {
+    protected subtractFromTotal(amount: BigJS, side: string, price: BigJS) {
         if (side === 'buy') {
             this._bidsTotal = this._bidsTotal.minus(amount);
             this._bidsValueTotal = this._bidsValueTotal.minus(amount.times(price));
@@ -474,7 +474,7 @@ export class BookBuilder extends EventEmitter implements Orderbook {
         }
     }
 
-    private addToTotal(amount: BigJS, side: string, price: BigJS) {
+    protected addToTotal(amount: BigJS, side: string, price: BigJS) {
         if (side === 'buy') {
             this._bidsTotal = this._bidsTotal.plus(amount);
             this._bidsValueTotal = this._bidsValueTotal.plus(amount.times(price));

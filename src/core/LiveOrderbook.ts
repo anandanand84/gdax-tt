@@ -30,7 +30,7 @@ import {
 import { Writable } from 'stream';
 
 
-export interface LiveBookConfig {
+export class LiveBookConfig {
     product: string;
     strictMode?: boolean;             // If true, throws errors when state goes out of sync rather than restarting
     logger?: Logger;
@@ -151,7 +151,7 @@ export class LiveOrderbook extends Writable implements Orderbook {
 
     protected _read() { /* no-op */ }
 
-    protected _write(msg: any, encoding: string, callback: () => void): void {
+    public _write(msg: any, encoding: string, callback: () => void): void {
         // Pass the msg on to downstream users
         // this.push(msg);
         // Process the message for the orderbook state

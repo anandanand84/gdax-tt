@@ -1,3 +1,4 @@
+import { setTimeout } from 'timers';
 import { LiveOrderbook, SnapshotMessage } from './core';
 import * as io from 'socket.io-client';
 import { Readable } from 'stream';
@@ -14,24 +15,40 @@ var connectionOptions:any = {
     "transports": ["websocket"],   // forces the transport to be only websocket. Server needs to be setup as well/
     "secure": true
 };
-var quoteSocket = io('http://localhost:3250/quotes', connectionOptions);
-
-
+var quoteSocket = io('http://localhost:15000/api/quotes', connectionOptions);
+var queue: { [product: string]: any[] } = {};
+var queueing: { [product: string]: boolean } = {};
+var socketConnected = false;
 var subscriptions = new Map<string, LiveOrderbook>()
 export class SocketIOReadStream extends Readable {
     constructor() {
         super({objectMode : true});
         var self = this;
         quoteSocket.on('connect', () => {
+            socketConnected = true;
             console.log('Connection established');
             subscriptions.forEach((book, product) => {
                 subscribe(product);
             })
             //Join channel and request snapshot for all subscriptions
             quoteSocket.on('stream', function (data:any) {
-                self.push(data)
+                if(queueing[data.productId]) {
+                    queue[data.productId].push(data);
+                    if(queue[data.productId].length > 400) {
+                        queueing[data.productId] = false;
+                        queue[data.productId] = [];
+                    } 
+                } else {
+                    queue[data.productId].forEach(function(oldMessage) {
+                        self.push(oldMessage);
+                    });
+                    self.push(data)
+                }
             });
             quoteSocket.on('snapshot', processSnaphshot)
+            quoteSocket.on('disconnect', ()=> {
+                socketConnected = false;
+            });
         });
     }
     _read(size: number) {
@@ -42,6 +59,8 @@ export class SocketIOReadStream extends Readable {
 let Socket = new SocketIOReadStream();
 
 function subscribe(product:string) {
+    queueing[product] = true;
+    queue[product] = [];
     quoteSocket.emit('subscribe', product)
     getSnapshot(product);
 }
@@ -51,35 +70,53 @@ function unSubscribe(product:string) {
 }
 
 function processSnaphshot(data:any) {
-    console.info('Received snapshot ');
-    let snapshot:SnapshotMessage = data;
-    const bids: PriceLevelWithOrders[] = [];
-    const asks: PriceLevelWithOrders[] = [];
-    const orders: OrderPool = {};
-    Object.keys(snapshot.orderPool).forEach(orderKey => {
-        let oldOrder = snapshot.orderPool[orderKey];
-        const newOrder: Level3Order = {
-            id: <any>oldOrder.price,
-            price: Big(oldOrder.price),
-            size: Big(oldOrder.size),
-            side: oldOrder.side
-        }; 
-        orders[newOrder.id] = newOrder;
-        const level: PriceLevelWithOrders = {
-            price: Big(oldOrder.price),
-            totalSize: Big(oldOrder.size).abs(),
-            orders: [ newOrder ]
-        };
-        if (newOrder.side === 'buy') {
+    try {
+        console.info('Received snapshot ');
+        let snapshot:SnapshotMessage = {} as SnapshotMessage;
+        snapshot.sequence = parseInt(data.info.sequence);
+        snapshot.productId = data.productId;
+        snapshot.type = 'snapshot';
+        const bids: PriceLevelWithOrders[] = [];
+        const asks: PriceLevelWithOrders[] = [];
+        const orders: OrderPool = {};
+        data.bids.forEach((bid:any) => {
+            const newOrder: Level3Order = {
+                id: <any>bid.price,
+                price: Big(bid.price),
+                size: Big(bid.totalSize),
+                side: 'buy'
+            }; 
+            orders[newOrder.id] = newOrder;
+            const level: PriceLevelWithOrders = {
+                price: Big(bid.price),
+                totalSize: Big(bid.totalSize).abs(),
+                orders: [ newOrder ]
+            };
             bids.push(level);
-        } else {
+        }); 
+        data.asks.forEach((ask:any) => {
+            const newOrder: Level3Order = {
+                id: <any>ask.price,
+                price: Big(ask.price),
+                size: Big(ask.totalSize),
+                side: 'sell'
+            }; 
+            orders[newOrder.id] = newOrder;
+            const level: PriceLevelWithOrders = {
+                price: Big(ask.price),
+                totalSize: Big(ask.totalSize).abs(),
+                orders: [ newOrder ]
+            };
             asks.push(level);
-        }
-    }); 
-    snapshot.asks = asks;
-    snapshot.bids = bids;
-    snapshot.orderPool = orders
-    Socket.push(snapshot)
+        }); 
+        snapshot.asks = asks;
+        snapshot.bids = bids;
+        snapshot.orderPool = orders
+        Socket.push(snapshot)
+        queueing[data.productId] = false;
+    }catch(err) {
+        queueing[data.productId] = false;
+    }
 }
 
 function getSnapshot(product: any) {
@@ -98,12 +135,18 @@ export function subscribeBook(product:any) {
     })
     Book.on('LiveOrderbook.skippedMessage', (details: any) => {
         // On GDAX, this event should never be emitted, but we put it here for completeness
-        console.log('SKIPPED MESSAGE', details);
-        console.log('Requesting snapshot again');
-        getSnapshot(product);
+        if(!queueing[product]){
+            queueing[product] = true;
+            queue[product] = [];
+            console.log('SKIPPED MESSAGE', details);
+            console.log('Requesting snapshot again');
+            getSnapshot(product);
+        }
     });
     subscriptions.set(product, Book);
-    subscribe(product);
+    if(socketConnected) {
+        subscribe(product);
+    }
     Socket.pipe(Book)
     return Book;
 }

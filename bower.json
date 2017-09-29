@@ -1,0 +1,31 @@
+{
+  "name": "tlab-trading-toolkit",
+  "description": "A trading toolkit for building advanced trading bots on the GDAX platform",
+  "main": "build/src/index.js",
+  "authors": [
+    "Cayle Sharrock <cayle@coinbase.com>"
+  ],
+  "license": "Apache-2.0",
+  "keywords": [
+    "gdax",
+    "trading",
+    "toolkit",
+    "bot",
+    "market-maker",
+    "arbitrage"
+  ],
+  "homepage": "https://github.com/anandanand84/gdax-tt",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "devDependencies": {
+    "polymer": "^2.1.0"
+  },
+  "dependencies": {
+    "paper-button": "PolymerElements/paper-button#^2.0.0"
+  }
+}

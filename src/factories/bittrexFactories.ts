@@ -70,6 +70,7 @@ export function FeedFactory(logger: Logger, productIds: string[], auth?: Exchang
         secret: process.env.BITTREX_SECRET
     };
     productIds = productIds.map((genericProduct: string) => {
+        console.log('Product ID', genericProduct);
         return getExchangeProduct(genericProduct) || genericProduct;
     });
     // There are too many books on Bittrex to just subscribe to all of them, so productIds is a required param

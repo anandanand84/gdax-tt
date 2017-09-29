@@ -14,6 +14,7 @@ export class CCXTProductMap {
     getExchangeProduct(genericProduct:string):string {
         if(!this.exchange.markets[genericProduct]) {
             console.trace('Generic Product not found');
+            return null;
         }
         return this.exchange.markets[genericProduct]['id']
     }
@@ -25,6 +26,7 @@ export class CCXTProductMap {
     getGenericProduct(exchangeProduct:string):string {
         if(!this.exchange.marketsById[exchangeProduct]) {
             console.trace('Exchange Product not found');
+            return null;
         }
         return this.exchange.marketsById[exchangeProduct]['symbol']
     }
