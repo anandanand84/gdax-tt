@@ -1,4 +1,3 @@
-import { Error } from 'tslint/lib/error';
 import { RBTree } from 'bintrees';
 import { Logger } from '../utils';
 import {
