@@ -3,7 +3,7 @@
 // Definitions by: Cayle Sharrock <https://github.com/CjS77>
 // Definitions: https://github.com/DefinitelyTyped/DefinitelyTyped
 
-declare module 'node.bittrex.api' {
+declare module 'node-bittrex-api' {
 
     export type BittrexCallback = (err: Error, data: any) => void;
 

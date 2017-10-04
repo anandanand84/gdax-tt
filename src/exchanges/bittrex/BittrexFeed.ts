@@ -13,7 +13,7 @@
  ***************************************************************************************************************************/
 
 import { ExchangeFeed, ExchangeFeedConfig } from '../ExchangeFeed';
-import * as Bittrex from 'node.bittrex.api';
+import * as Bittrex from 'node-bittrex-api';
 import { LevelMessage, SnapshotMessage, TickerMessage, TradeMessage } from '../../core/Messages';
 import { BittrexAPI } from './BittrexAPI';
 import { Big } from '../../lib/types';
