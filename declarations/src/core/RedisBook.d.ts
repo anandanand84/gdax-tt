@@ -15,7 +15,6 @@ import { RedisBookBuilder } from '../lib/RedisBookBuilder';
 import { Orderbook } from '../lib';
 import { LiveBookConfig, LiveOrderbook } from './';
 export declare class RedisBookConfig extends LiveBookConfig {
-    redisOptions: any;
     exchange: string;
 }
 export declare class RedisBook extends LiveOrderbook implements Orderbook {

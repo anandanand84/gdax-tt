@@ -18,14 +18,12 @@ import { SkippedMessageEvent } from '../src/core/LiveOrderbook';
 import { Ticker } from '../src/exchanges/PublicExchangeAPI';
 import { RedisBook, RedisBookConfig } from '../src/core/RedisBook';
 import { Writable } from 'stream'
+import { getClient, getRedisct, getEmitter } from '../src/core/RedisConnector'
 
-let redisPort = 6379;
-let redisHost = 'localhost';
-let redisPassword = 'none';
+import { getIntervalTimeStamp } from 'tlab-util';
 
-var nodeRedis = require('redis');
-var redis = nodeRedis.createClient(redisPort, redisHost, { auth_pass: redisPassword });;
-var io = require('socket.io-emitter')(redis);
+var redisct = getRedisct();
+var io = getEmitter();
 
 const EXCHANGE:string = process.env.Exchange || "GDAX";
 
@@ -35,8 +33,38 @@ class SocketStream extends Writable {
     write(msg: any, callback: any): boolean {
         msg.exchange = EXCHANGE;
         let room = `${msg.exchange}:${msg.productId}`;
-        let type = 'stream';
-        io.of('/api/quotes').to(room).emit(type, Object.assign({}, msg, {productId : room}));
+        let orderBookRoom = `${room}:book`;
+        let tickerRoom = `${room}:ticker`;
+        let type = 'book';
+        let toRoom = '';
+        switch(msg.type) {
+            case 'ticker':
+                toRoom = tickerRoom;    
+                type = 'ticker';
+                break;
+            case 'snapshot': 
+                type = 'snapshot';
+                toRoom = orderBookRoom;
+                break;
+            case 'trade':
+                var ltt = new Date(msg.time).getTime();
+                const ticker = {
+                    type: 'trade',
+                    ltt : ltt,
+                    scrip : msg.productId,
+                    exchange: msg.exchange,
+                    ltp: msg.price,
+                    volume: msg.size
+                };
+                io.of('/api/quotes').to(tickerRoom).emit('ticker', Object.assign({}, ticker, {productId : room}));
+                var quote = {ts:getIntervalTimeStamp(ltt, 60, 0), o : msg.price, h : msg.price, l:msg.price, c:msg.price, v:msg.size, exchange:msg.exchange, scrip:msg.productId}
+                redisct.saveQuotes(quote, getIntervalTimeStamp(ltt, 86400, 0));
+            case 'level':
+                toRoom = orderBookRoom;
+                type ='book';
+                break;
+        }
+        io.of('/api/quotes').to(toRoom).emit(type, Object.assign({}, msg, {productId : room}));
         return true;
     }
 }
@@ -60,9 +88,6 @@ async function start() {
                 product: product,
                 logger: logger,
                 exchange : EXCHANGE,
-                redisOptions: {
-                    port : 6379
-                }
             };
             const book = new RedisBook(config);
             book.on('LiveOrderbook.snapshot', () => {

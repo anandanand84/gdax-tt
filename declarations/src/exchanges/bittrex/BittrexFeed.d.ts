@@ -16,10 +16,11 @@ export declare class BittrexFeed extends ExchangeFeed {
     private client;
     private connection;
     private counters;
+    private erroredProducts;
     constructor(config: ExchangeFeedConfig);
     readonly owner: string;
     subscribe(products: string[]): Promise<boolean>;
-    protected connect(): void;
+    protected connect(): Promise<void>;
     protected handleMessage(msg: any): void;
     protected onOpen(): void;
     protected onClose(code: number, reason: string): void;

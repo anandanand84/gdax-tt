@@ -23,9 +23,7 @@
     "tests"
   ],
   "devDependencies": {
-    "polymer": "^2.1.0"
-  },
-  "dependencies": {
+    "polymer": "^2.1.0",
     "paper-button": "PolymerElements/paper-button#^2.0.0"
   }
 }

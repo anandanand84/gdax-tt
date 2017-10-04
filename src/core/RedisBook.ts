@@ -16,7 +16,6 @@ import { Orderbook } from '../lib';
 import { LiveBookConfig, LiveOrderbook } from './';
 
 export class RedisBookConfig extends LiveBookConfig {
-    redisOptions : any;
     exchange: string
 }
 
@@ -26,6 +25,6 @@ export class RedisBook extends LiveOrderbook implements Orderbook {
 
     constructor(config: RedisBookConfig) {
         super(config);
-        this._book = new RedisBookBuilder(config.exchange, config.product, config.logger, config.redisOptions);
+        this._book = new RedisBookBuilder(config.exchange, config.product, config.logger);
     }
 }

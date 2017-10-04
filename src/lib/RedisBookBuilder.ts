@@ -10,8 +10,8 @@ import {
 } from './';
 import { BigJS, ZERO } from './types';
 import assert = require('assert');
+import { getClient } from '../core/RedisConnector'
 
-import Redis = require('ioredis');
 /**
  * For cumulative order calculations, indicates at which price to start counting at and from which order size to start
  * within that level
@@ -34,7 +34,7 @@ export class RedisBookBuilder extends BookBuilder implements Orderbook {
     protected _bidsValueTotal: BigJS = ZERO;
     protected _asksTotal: BigJS = ZERO;
     protected _asksValueTotal: BigJS = ZERO;
-    private redisclient:Redis.Redis;
+    private redisclient:any;
     private product:string
     private SET_KEY_BID:string
     private SET_KEY_ASK:string
@@ -48,9 +48,9 @@ export class RedisBookBuilder extends BookBuilder implements Orderbook {
         return redis.call('del', key)
     end`
 
-    constructor(exchange:string, product:string, logger: Logger, redisOptions: Redis.RedisOptions ) {
+    constructor(exchange:string, product:string, logger: Logger ) {
         super(logger);
-        this.redisclient = new Redis(redisOptions)
+        this.redisclient = getClient();
         this.product = product;
         this.exchange = exchange;
         this.SET_KEY_BID = `{${this.exchange}:${this.product}}:BIDS`;

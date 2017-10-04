@@ -1,10 +1,8 @@
 /// <reference types="bintrees" />
-/// <reference types="ioredis" />
 import { RBTree } from 'bintrees';
 import { Logger } from '../utils';
 import { AggregatedLevelWithOrders, BookBuilder, Level3Order, Orderbook, PriceComparable } from './';
 import { BigJS } from './types';
-import Redis = require('ioredis');
 /**
  * For cumulative order calculations, indicates at which price to start counting at and from which order size to start
  * within that level
@@ -35,7 +33,7 @@ export declare class RedisBookBuilder extends BookBuilder implements Orderbook {
     private PARTIAL_KEY_BOOK_INFO_ASK;
     private exchange;
     private DELETE_LUA_SCRIPT;
-    constructor(exchange: string, product: string, logger: Logger, redisOptions: Redis.RedisOptions);
+    constructor(exchange: string, product: string, logger: Logger);
     clear(): void;
     readonly bidsTotal: BigJS;
     readonly bidsValueTotal: BigJS;

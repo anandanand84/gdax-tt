@@ -30,6 +30,7 @@ export class BittrexFeed extends ExchangeFeed {
     private client: any;
     private connection: any;
     private counters: { [product: string]: MessageCounter };
+    private erroredProducts: Set<string> = new Set<string>();
 
     constructor(config: ExchangeFeedConfig) {
         super(config);
@@ -58,32 +59,48 @@ export class BittrexFeed extends ExchangeFeed {
         }
         let index = 1;
         for (let product of products) {
-            if(index % 10 == 0) await wait(15000);
+            this.log('info', `Subscribing product ${product} at ${index} of ${products.length}`)
             index++;
-            this.client.call('CoreHub', 'SubscribeToExchangeDeltas', product).done((err: Error, result: boolean) => {
-                if (err) {
-                    console.log('Error occured');
-                    return console.error(err);
-                }
-
-                if (result === true) {
-                    this.log('info', `Subscribed to ${product} on ${this.owner}`);
-                }
+            if(index % 50 === 0) {
+                console.log(`Waiting for 50 seconds after ${index} of ${products.length}`,  )
+                await wait(25000);
+            }
+            await new Promise((resolve, reject) => {
+                this.client.call('CoreHub', 'SubscribeToExchangeDeltas', product).done((err: Error, result: boolean) => {
+                    if (err) {
+                        this.erroredProducts.add(product)
+                        console.log('Error occured');
+                        resolve(false)
+                        return console.error(err);
+                    }
+                    if (result === true) {
+                        this.log('info', `Subscribed to ${product} on ${this.owner}, requesting snaphsot.`);
+                        this.client.call('CoreHub', 'queryExchangeState', product).done((err: Error, data: any) => {
+                            this.log('info', `Snapshot received for ${product} on ${this.owner}`);
+                            const snapshot: SnapshotMessage = this.processSnapshot(product, data);
+                            if(snapshot !== null) {
+                                this.push(snapshot);
+                            }else {
+                                this.erroredProducts.add(product)
+                                console.warn('Null received for snapshot for product ', product, 'raw message', data);
+                            } 
+                            resolve(true)
+                        });
+                    }
+                });
             });
-            this.client.call('CoreHub', 'queryExchangeState', product).done((err: Error, data: any) => {
-                const snapshot: SnapshotMessage = this.processSnapshot(product, data);
-                if(snapshot !== null) {
-                    this.push(snapshot);
-                }else {
-                    console.warn('Null received for snapshot for product ', product, 'raw message', data);
-                } 
-
-            });
+        }
+        if(this.erroredProducts.size > 0) {
+            console.log(`${this.erroredProducts.size} products errored retrying ....`);
+            this.subscribe(Array.from(this.erroredProducts));
+            this.erroredProducts.clear();
+        } else {
+            console.log('All products subscribed');
         }
         return true;
     }
 
-    protected connect() {
+    protected async connect() {
         const client = this.client = this.client = Bittrex.websockets.client();
         client.serviceHandlers.messageReceived = (msg: any) => this.handleMessage(msg);
         client.serviceHandlers.bound = () => this.onNewConnection();
