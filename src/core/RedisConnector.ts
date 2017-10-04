@@ -1,6 +1,6 @@
 import redisct = require('redisct');
 
-const redis = redisct();
+const redis:any = (<any>redisct)();
 
 export function getClient() {
     return redis.getRedisClient(); 
