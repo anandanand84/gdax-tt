@@ -12,7 +12,7 @@
  * License for the specific language governing permissions and limitations under the License.                              *
  ***************************************************************************************************************************/
 import { Product, PublicExchangeAPI, Ticker } from '../PublicExchangeAPI';
-import * as Bittrex from 'node.bittrex.api';
+import * as Bittrex from 'node-bittrex-api';
 import { ExchangeAuthConfig } from '../AuthConfig';
 import { AuthenticatedExchangeAPI, Balances } from '../AuthenticatedExchangeAPI';
 import { Big } from '../../lib/types';
