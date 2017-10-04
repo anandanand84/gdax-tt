@@ -8,3 +8,5 @@ export * from './RateLimiter';
 export * from './Trader';
 export * from './Triggers';
 export * from './ProductSplitter';
+export * from './RedisBook';
+export * from './RedisConnector';
