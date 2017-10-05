@@ -18,8 +18,7 @@ import { SkippedMessageEvent } from '../src/core/LiveOrderbook';
 import { Ticker } from '../src/exchanges/PublicExchangeAPI';
 import { RedisBook, RedisBookConfig } from '../src/core/RedisBook';
 import { Writable } from 'stream'
-import { getClient, getRedisct, getEmitter } from '../src/core/RedisConnector'
-
+import { getRedisct, getEmitter } from '../src/core/RedisConnector'
 import { getIntervalTimeStamp } from 'tlab-util';
 
 var redisct = getRedisct();

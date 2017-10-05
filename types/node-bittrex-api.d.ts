@@ -117,11 +117,13 @@ declare module 'node-bittrex-api' {
 
     export namespace websockets {
         export type BittrexCallback2 = (data: any) => void;
+        
+        export type BittrexClientCallback = (client: any) => void;
 
         export function listen(callback: BittrexCallback2): any; // SignalRClient;
 
         export function subscribe(markets: string[], callback: BittrexCallback2): any; // SignalRClient;
 
-        export function client(): any; // SignalRClient
+        export function client(callback: BittrexClientCallback): any; // SignalRClient
     }
 }

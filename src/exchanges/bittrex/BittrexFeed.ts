@@ -101,15 +101,17 @@ export class BittrexFeed extends ExchangeFeed {
     }
 
     protected async connect() {
-        const client = this.client = this.client = Bittrex.websockets.client();
-        client.serviceHandlers.messageReceived = (msg: any) => this.handleMessage(msg);
-        client.serviceHandlers.bound = () => this.onNewConnection();
-        client.serviceHandlers.disconnected = (code: number, reason: string) => this.onClose(code, reason);
-        client.serviceHandlers.onerror = (err: Error) => this.onError(err);
-        client.serviceHandlers.connected = (connection: any) => {
-            this.connection = connection;
-            this.emit('websocket-connection');
-        };
+        Bittrex.websockets.client((client:any) => {
+            this.client = client;
+            client.serviceHandlers.messageReceived = (msg: any) => this.handleMessage(msg);
+            client.serviceHandlers.bound = () => this.onNewConnection();
+            client.serviceHandlers.disconnected = (code: number, reason: string) => this.onClose(code, reason);
+            client.serviceHandlers.onerror = (err: Error) => this.onError(err);
+            client.serviceHandlers.connected = (connection: any) => {
+                this.connection = connection;
+                this.emit('websocket-connection');
+            };
+        });
     }
 
     protected handleMessage(msg: any): void {
