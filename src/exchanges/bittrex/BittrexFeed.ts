@@ -58,13 +58,11 @@ export class BittrexFeed extends ExchangeFeed {
             return false;
         }
         let index = 1;
+        console.log('Subscribe started @ ', new Date())
         for (let product of products) {
+            await wait(1100);
             this.log('info', `Subscribing product ${product} at ${index} of ${products.length}`)
             index++;
-            if(index % 50 === 0) {
-                console.log(`Waiting for 50 seconds after ${index} of ${products.length}`,  )
-                await wait(25000);
-            }
             await new Promise((resolve, reject) => {
                 this.client.call('CoreHub', 'SubscribeToExchangeDeltas', product).done((err: Error, result: boolean) => {
                     if (err) {
@@ -96,6 +94,7 @@ export class BittrexFeed extends ExchangeFeed {
             this.erroredProducts.clear();
         } else {
             console.log('All products subscribed');
+            console.log('Subscribe completed @ ', new Date())
         }
         return true;
     }
