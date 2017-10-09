@@ -117,7 +117,15 @@ export class BittrexFeed extends ExchangeFeed {
             client.serviceHandlers.connected = (connection: any) => {
                 this.connection = connection;
                 this.emit('websocket-connection');
-            };
+            }
+            client.serviceHandlers.connectFailed = function(error:any) { console.log("Websocket connectFailed: ", error); }
+            client.serviceHandlers.bindingError = function (error:any) { console.log("Websocket bindingError: ", error); }
+            client.serviceHandlers.connectionLost = function (error:any) { console.log("Connection Lost: ", error); }
+            client.serviceHandlers.reconnecting = function (retry:any)  {
+                console.log("Websocket Retrying: ", retry);
+                //return retry.count >= 3; // cancel retry true
+                return true;
+            }
         });
     }
 
@@ -146,6 +154,7 @@ export class BittrexFeed extends ExchangeFeed {
     }
 
     protected onClose(code: number, reason: string): void {
+        console.log('Websocket connectFailed');
         this.emit('websocket-closed');
         this.connection = null;
     }
