@@ -1,6 +1,8 @@
 import redisct = require('redisct');
 
-const redis:any = (<any>redisct)();
+var config:any = require(process.cwd() + '/remote-config/config.json');
+
+const redis:any = (<any>redisct)(config.redis.cache.host, config.redis.cache.port, config.redis.cache.password);
 
 export function getClient() {
     return redis.getRedisClient(); 

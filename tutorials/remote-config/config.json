@@ -1,0 +1,17 @@
+{
+    "redis": {
+      "cache": {
+        "host": "localhost",
+        "password": "none",
+        "port": 6379
+      },
+      "pubsub": {
+        "host": "localhost",
+        "password": "none",
+        "port": 6379
+      }
+    },
+    "quotegenerator" : {
+      "port" : 18000
+    }
+  }

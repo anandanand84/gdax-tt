@@ -60,7 +60,7 @@ export class BittrexFeed extends ExchangeFeed {
         let index = 1;
         console.log('Subscribe started @ ', new Date())
         for (let product of products) {
-            await wait(1100);
+            await wait(300);
             this.log('info', `Subscribing product ${product} at ${index} of ${products.length}`)
             index++;
             await new Promise((resolve, reject) => {
