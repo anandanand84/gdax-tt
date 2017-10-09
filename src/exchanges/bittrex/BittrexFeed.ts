@@ -26,6 +26,8 @@ var wait = async function(time:number) {
     });
 }
 
+var retryCount = process.env.RETRY_COUNT || 1;
+
 export class BittrexFeed extends ExchangeFeed {
     private client: any;
     private connection: any;
@@ -90,7 +92,13 @@ export class BittrexFeed extends ExchangeFeed {
         }
         if(this.erroredProducts.size > 0) {
             console.log(`${this.erroredProducts.size} products errored retrying ....`);
-            this.subscribe(Array.from(this.erroredProducts));
+            if(retryCount > 0) {
+                retryCount--;
+                this.subscribe(Array.from(this.erroredProducts));
+            } else {
+                console.log('No more retry available');
+                console.log('could not subscribe following products ', Array.from(this.erroredProducts))    
+            };
             this.erroredProducts.clear();
         } else {
             console.log('All products subscribed');
