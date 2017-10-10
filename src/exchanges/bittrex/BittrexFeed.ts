@@ -169,6 +169,7 @@ export class BittrexFeed extends ExchangeFeed {
             counter = this.counters[product] = { base: -1, offset: 0 };
         }
         if (counter.base < 1) {
+            console.warn(`Requesting next sequence without setting snapshot sequence for product ${product}, current counter offset ${counter.offset}`);
             return -1;
         }
         counter.offset += 1;
@@ -306,6 +307,8 @@ export class BittrexFeed extends ExchangeFeed {
             }
             return null;
         }catch(err) {
+            console.log('Failed to process snapshot for ', product);
+            console.error(err)
             return null;
         }
     }

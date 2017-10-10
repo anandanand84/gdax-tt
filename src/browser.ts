@@ -19,6 +19,24 @@ var queue: { [product: string]: any[] } = {};
 var queueing: { [product: string]: boolean } = {};
 var socketConnected = false;
 var subscriptions = new Map<string, LiveOrderbook>()
+
+function getSnapshot(product: any) {
+    let book = subscriptions.get(product);
+    book.book.clear();
+    quoteSocket.emit('snapshot', product);
+}
+
+function subscribe(product:string) {
+    queueing[product] = true;
+    queue[product] = [];
+    quoteSocket.emit('subscribe', product)
+    getSnapshot(product);
+}
+
+function unSubscribe(product:string) {
+    quoteSocket.emit('unsubscribe', product)
+}
+
 export class SocketIOReadStream extends Readable {
     constructor() {
         super({objectMode : true});
@@ -56,17 +74,6 @@ export class SocketIOReadStream extends Readable {
     }
 }
 let Socket = new SocketIOReadStream();
-
-function subscribe(product:string) {
-    queueing[product] = true;
-    queue[product] = [];
-    quoteSocket.emit('subscribe', product)
-    getSnapshot(product);
-}
-
-function unSubscribe(product:string) {
-    quoteSocket.emit('unsubscribe', product)
-}
 
 function processSnaphshot(data:any) {
     try {
@@ -116,12 +123,6 @@ function processSnaphshot(data:any) {
     }catch(err) {
         queueing[data.productId] = false;
     }
-}
-
-function getSnapshot(product: any) {
-    let book = subscriptions.get(product);
-    book.book.clear();
-    quoteSocket.emit('snapshot', product);
 }
 
 export function subscribeBook(product:any) {
