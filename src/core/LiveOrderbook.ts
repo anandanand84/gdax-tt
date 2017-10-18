@@ -11,7 +11,6 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the                      *
  * License for the specific language governing permissions and limitations under the License.                              *
  ***************************************************************************************************************************/
-
 import { Big, BigJS, Biglike, ZERO } from '../lib/types';
 import { CumulativePriceLevel, Level3Order, Orderbook, OrderbookState } from '../lib/Orderbook';
 import { AggregatedLevelFactory, AggregatedLevelWithOrders, BookBuilder, StartPoint } from '../lib/BookBuilder';
@@ -25,7 +24,8 @@ import {
     OrderbookMessage,
     OrderDoneMessage,
     SnapshotMessage,
-    TickerMessage
+    TickerMessage,
+    TradeMessage
 } from './Messages';
 import { Writable } from 'stream';
 
@@ -175,7 +175,8 @@ export class LiveOrderbook extends Writable implements Orderbook {
                     this.emit('LiveOrderbook.update', msg);
                     break;
                 case 'trade':
-                    // Trade messages don't affect the orderbook
+                // Trade messages don't affect the orderbook
+                    this.processTradeMessage(msg as TradeMessage);
                     this.emit('LiveOrderbook.trade', msg);
                     break;
                 default:
@@ -186,6 +187,10 @@ export class LiveOrderbook extends Writable implements Orderbook {
             }
             callback();
         })
+    }
+
+    protected processTradeMessage(msg:TradeMessage):void {
+        return;
     }
 
     /**

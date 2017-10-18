@@ -17,6 +17,7 @@ import { CumulativePriceLevel, Orderbook, OrderbookState } from '../lib/Orderboo
 import { BookBuilder, StartPoint } from '../lib/BookBuilder';
 import { Logger } from '../utils/Logger';
 import { Ticker } from '../exchanges/PublicExchangeAPI';
+import { TradeMessage } from './Messages';
 import { Writable } from 'stream';
 export declare class LiveBookConfig {
     product: string;
@@ -72,6 +73,7 @@ export declare class LiveOrderbook extends Writable implements Orderbook {
     ordersForValue(side: string, value: Biglike, useQuote: boolean, startPrice?: StartPoint): CumulativePriceLevel[];
     protected _read(): void;
     _write(msg: any, encoding: string, callback: () => void): void;
+    protected processTradeMessage(msg: TradeMessage): void;
     /**
      * Checks the given sequence number against the expected number for a message and returns a status result
      */

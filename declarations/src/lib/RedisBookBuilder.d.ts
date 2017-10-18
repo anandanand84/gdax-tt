@@ -3,6 +3,7 @@ import { RBTree } from 'bintrees';
 import { Logger } from '../utils';
 import { AggregatedLevelWithOrders, BookBuilder, Level3Order, Orderbook, PriceComparable } from './';
 import { BigJS } from './types';
+import { TradeMessage } from '../core/Messages';
 /**
  * For cumulative order calculations, indicates at which price to start counting at and from which order size to start
  * within that level
@@ -25,7 +26,9 @@ export declare class RedisBookBuilder extends BookBuilder implements Orderbook {
     protected _asksTotal: BigJS;
     protected _asksValueTotal: BigJS;
     private redisclient;
+    private redisct;
     private product;
+    private symbol;
     private SET_KEY_BID;
     private SET_KEY_ASK;
     private KEY_BOOK_INFO;
@@ -49,6 +52,7 @@ export declare class RedisBookBuilder extends BookBuilder implements Orderbook {
      * @param order
      */
     add(order: Level3Order): boolean;
+    processTradeMessage(msg: TradeMessage): void;
     /**
      * Changes the size of an existing order to newSize. If the order doesn't exist, returns false.
      * If the newSize is zero, the order is removed.

@@ -7,9 +7,10 @@ import {
     Orderbook,
     PriceComparable
 } from './';
-import { BigJS, ZERO } from './types';
+import { BigJS, ZERO, Big } from './types';
 import assert = require('assert');
-import { getClient } from '../core/RedisConnector'
+import { getClient, getRedisct } from '../core/RedisConnector'
+import { TradeMessage } from '../core/Messages';
 
 /**
  * For cumulative order calculations, indicates at which price to start counting at and from which order size to start
@@ -34,7 +35,9 @@ export class RedisBookBuilder extends BookBuilder implements Orderbook {
     protected _asksTotal: BigJS = ZERO;
     protected _asksValueTotal: BigJS = ZERO;
     private redisclient:any;
+    private redisct: any;
     private product:string
+    private symbol:string
     private SET_KEY_BID:string
     private SET_KEY_ASK:string
     private KEY_BOOK_INFO:string
@@ -50,8 +53,10 @@ export class RedisBookBuilder extends BookBuilder implements Orderbook {
     constructor(exchange:string, product:string, logger: Logger ) {
         super(logger);
         this.redisclient = getClient();
+        this.redisct = getRedisct();
         this.product = product;
         this.exchange = exchange;
+        this.symbol = `${this.exchange}:${this.product}`
         this.SET_KEY_BID = `{${this.exchange}:${this.product}}:BIDS`;
         this.SET_KEY_ASK = `{${this.exchange}:${this.product}}:ASKS`;
         this.KEY_BOOK_INFO = `{${this.exchange}:${this.product}}:BOOK:INFO`;
@@ -65,6 +70,13 @@ export class RedisBookBuilder extends BookBuilder implements Orderbook {
             //SET containing the bids and asks
             this.redisclient.del(this.SET_KEY_BID)
             this.redisclient.del(this.SET_KEY_ASK)
+            
+            // Trade History && Trade cum value
+            this.redisclient.del(`{${this.exchange}:${this.product}}:TRADES`);
+            this.redisclient.del(`{${this.exchange}:${this.product}}:T:B:S`);
+            this.redisclient.del(`{${this.exchange}:${this.product}}:T:B:V`);
+            this.redisclient.del(`{${this.exchange}:${this.product}}:T:S:S`);
+            this.redisclient.del(`{${this.exchange}:${this.product}}:T:S:V`);
             
             //HASH containing the products totalbids, ask values
             this.redisclient.del(this.KEY_BOOK_INFO)
@@ -145,6 +157,15 @@ export class RedisBookBuilder extends BookBuilder implements Orderbook {
         // this._orderPool[order.id] = order;
         // this.addToTotal(order.size, order.side, order.price);
         // return true;
+    }
+
+    processTradeMessage(msg:TradeMessage) {
+        let price = Big(msg.price);
+        let size = Big(msg.size);
+        let value = price.mul(size);
+        let time = msg.time;
+        let side = msg.side;
+        this.redisct.saveTradeMessage({ symbol : this.symbol, time, price, size, value, side})
     }
 
     /**

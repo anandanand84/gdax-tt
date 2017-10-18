@@ -13,7 +13,7 @@
  ***************************************************************************************************************************/
 import { RedisBookBuilder } from '../lib/RedisBookBuilder';
 import { Orderbook } from '../lib';
-import { LiveBookConfig, LiveOrderbook } from './';
+import { LiveBookConfig, LiveOrderbook, TradeMessage } from './';
 
 export class RedisBookConfig extends LiveBookConfig {
     exchange: string
@@ -26,5 +26,9 @@ export class RedisBook extends LiveOrderbook implements Orderbook {
     constructor(config: RedisBookConfig) {
         super(config);
         this._book = new RedisBookBuilder(config.exchange, config.product, config.logger);
+    }
+
+    processTradeMessage(msg:TradeMessage) {
+        this._book.processTradeMessage(msg);
     }
 }
