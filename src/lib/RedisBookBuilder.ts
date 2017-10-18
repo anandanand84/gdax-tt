@@ -73,10 +73,13 @@ export class RedisBookBuilder extends BookBuilder implements Orderbook {
             
             // Trade History && Trade cum value
             this.redisclient.del(`{${this.exchange}:${this.product}}:TRADES`);
+            this.redisclient.del(`{${this.exchange}:${this.product}}:T:T`);
             this.redisclient.del(`{${this.exchange}:${this.product}}:T:B:S`);
+            this.redisclient.del(`{${this.exchange}:${this.product}}:T:B:C`);
             this.redisclient.del(`{${this.exchange}:${this.product}}:T:B:V`);
             this.redisclient.del(`{${this.exchange}:${this.product}}:T:S:S`);
             this.redisclient.del(`{${this.exchange}:${this.product}}:T:S:V`);
+            this.redisclient.del(`{${this.exchange}:${this.product}}:T:S:C`);
             
             //HASH containing the products totalbids, ask values
             this.redisclient.del(this.KEY_BOOK_INFO)
