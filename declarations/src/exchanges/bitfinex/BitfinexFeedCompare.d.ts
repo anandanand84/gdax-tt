@@ -24,7 +24,7 @@ export interface BitfinexFeedConfig extends ExchangeFeedConfig {
  *
  */
 export declare class BitfinexFeed extends ExchangeFeed {
-    private counters;
+    private sequence;
     private subscriptions;
     private paused;
     private pinger;
@@ -37,13 +37,12 @@ export declare class BitfinexFeed extends ExchangeFeed {
      * Resubscribe to channels using fire-and-forget.
      */
     resubscribeAll(): void;
-    private nextSequence(product);
-    private setSnapshotSequence(product, sequence);
     subscribe(channelType: string, product: string): void;
     unsubscribe(chanId: string): void;
     onOpen(): void;
     protected onClose(code: number, reason: string): void;
     protected handleMessage(data: any): void;
+    private readonly nextSequence;
     private mapProduct(id);
     private mapTicker(bt);
     private mapSnapshot(bs);

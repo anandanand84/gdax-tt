@@ -1,4 +1,3 @@
-import { ProductMap } from '../ProductMap';
 /***************************************************************************************************************************
  * @license                                                                                                                *
  * Copyright 2017 Coinbase, Inc.                                                                                           *
@@ -21,7 +20,7 @@ import {
     BitfinexTradeSnapshot,
     BitfinexTradeMessage
 } from './BitfinexMessages';
-import { WEBSOCKET_API_VERSION, ORDERBOOK_PRECISION } from './BitfinexCommon';
+import { WEBSOCKET_API_VERSION, ORDERBOOK_PRECISION, REVERSE_PRODUCT_MAP } from './BitfinexCommon';
 import { LevelMessage, SnapshotMessage, TickerMessage, TradeMessage } from '../../core/Messages';
 import { Level3Order, PriceLevelWithOrders } from '../../lib/Orderbook';
 import { Big } from '../../lib/types';
@@ -43,12 +42,6 @@ export interface BitfinexFeedConfig extends ExchangeFeedConfig {
     standardMessages: boolean;
     snapshotDepth?: number;
 }
-
-interface MessageCounter {
-    base: number;
-    offset: number;
-}
-
 
 /**
  * A client class exposing the Bitfinex public websocket feed
@@ -72,7 +65,7 @@ interface MessageCounter {
  */
 export class BitfinexFeed extends ExchangeFeed {
 
-    private counters: { [product: string]: MessageCounter };
+    private sequence: number;
     private subscriptions: BitfinexChannels;
     private paused: boolean;
     private pinger: NodeJS.Timer;
@@ -83,7 +76,7 @@ export class BitfinexFeed extends ExchangeFeed {
         super(config);
         this.standardMessages = config.standardMessages || true;
         this.clearChannels();
-        this.counters = {};
+        this.sequence = 0;
         this.snapshotDepth = config.snapshotDepth || 250;
         this.connect();
     }
@@ -106,28 +99,6 @@ export class BitfinexFeed extends ExchangeFeed {
             this.subscribe(channel.type, channel.pair);
             this.removeSubscription({ chanId: channel.id });
         }
-    }
-
-    private nextSequence(product: string): number {
-        let counter: MessageCounter = this.counters[product];
-        if (!counter) {
-            counter = this.counters[product] = { base: -1, offset: 0 };
-        }
-        if (counter.base < 1) {
-            console.trace(`Requesting next sequence without setting snapshot sequence for product ${product}, current counter offset ${counter.offset}`);
-            return -1;
-        }
-        counter.offset += 1;
-        let seq = counter.base + counter.offset;
-        return seq;
-    }
-
-    private setSnapshotSequence(product: string, sequence: number): void {
-        let counter: MessageCounter = this.counters[product];
-        if (!counter) {
-            counter = this.counters[product] = { base: -1, offset: 0 };
-        }
-        counter.base = sequence;
     }
 
     subscribe(channelType: string, product: string) {
@@ -159,8 +130,7 @@ export class BitfinexFeed extends ExchangeFeed {
                 break;
         }
         this.send(subscribeMessage, (err: Error) => {
-            if(err)
-                this.log('error', `Error subscribing to Bitfinex channel ${channelType} ${product}`, err);
+            this.log('error', `Error subscribing to Bitfinex channel ${channelType} ${product}`, err);
         });
     }
 
@@ -374,8 +344,12 @@ export class BitfinexFeed extends ExchangeFeed {
         }
     }
 
+    private get nextSequence() {
+        return this.sequence++;
+    }
+
     private mapProduct(id: string): string {
-        return ProductMap.ExchangeMap.get('Bitfinex').getGenericProduct(id);
+        return REVERSE_PRODUCT_MAP[id.toLowerCase()] || id;
     }
 
     private mapTicker(bt: BitfinexTickerMessage): TickerMessage {
@@ -396,8 +370,6 @@ export class BitfinexFeed extends ExchangeFeed {
 
     private mapSnapshot(bs: BitfinexOrderbookSnapshot): SnapshotMessage {
         const pair = this.subscriptions[bs.channel_id].pair;
-        console.log('Mapping snapshot for ', pair);
-        this.setSnapshotSequence(pair, 1);
         const productId = this.mapProduct(pair);
         const bids: PriceLevelWithOrders[] = [];
         const asks: PriceLevelWithOrders[] = [];
@@ -426,7 +398,7 @@ export class BitfinexFeed extends ExchangeFeed {
             orders[newOrder.id] = newOrder;
         });
         return {
-            sequence: this.nextSequence(pair),
+            sequence: this.nextSequence,
             time: new Date(),
             type: 'snapshot',
             productId: productId,
@@ -450,7 +422,7 @@ export class BitfinexFeed extends ExchangeFeed {
         return {
             type: 'level',
             productId: productId,
-            sequence: this.nextSequence(pair),
+            sequence: this.nextSequence,
             time: new Date(),
             price: order.price,
             size: order.count === 0 ? '0' : Math.abs(size).toString(),
