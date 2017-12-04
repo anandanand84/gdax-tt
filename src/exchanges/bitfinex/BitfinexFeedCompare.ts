@@ -20,7 +20,7 @@ import {
     BitfinexTradeSnapshot,
     BitfinexTradeMessage
 } from './BitfinexMessages';
-import { WEBSOCKET_API_VERSION, ORDERBOOK_PRECISION, REVERSE_PRODUCT_MAP } from './BitfinexCommon';
+import { WEBSOCKET_API_VERSION, ORDERBOOK_PRECISION } from './BitfinexCommon';
 import { LevelMessage, SnapshotMessage, TickerMessage, TradeMessage } from '../../core/Messages';
 import { Level3Order, PriceLevelWithOrders } from '../../lib/Orderbook';
 import { Big } from '../../lib/types';
