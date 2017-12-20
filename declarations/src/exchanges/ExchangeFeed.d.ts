@@ -1,4 +1,4 @@
-/// <reference types="uws" />
+/// <reference types="ws" />
 /// <reference types="node" />
 /***************************************************************************************************************************
  * @license                                                                                                                *
@@ -16,7 +16,7 @@
 import { Readable } from 'stream';
 import { Logger } from '../utils/Logger';
 import { ExchangeAuthConfig } from './AuthConfig';
-import * as WebSocket from 'uws';
+import WebSocket = require('ws');
 export declare class ExchangeFeedConfig {
     wsUrl: string;
     logger: Logger;
@@ -43,6 +43,7 @@ export declare abstract class ExchangeFeed extends Readable {
     disconnect(): void;
     protected connect(products?: string[]): void;
     protected getWebsocketUrlForProduct(product: string): string;
+    private killProcess(msg);
     protected readonly abstract owner: string;
     protected abstract handleMessage(msg: string, product?: string): void;
     protected abstract onOpen(): void;

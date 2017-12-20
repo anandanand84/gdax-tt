@@ -16,8 +16,8 @@ import { Readable } from 'stream';
 import { Logger } from '../utils/Logger';
 import { ExchangeAuthConfig } from './AuthConfig';
 import { createHmac } from 'crypto';
-// import WebSocket = require('ws');
-import * as WebSocket from 'uws';
+import WebSocket = require('ws');
+// import * as WebSocket from 'uws';
 import Timer = NodeJS.Timer;
 
 export class ExchangeFeedConfig {
@@ -30,7 +30,6 @@ export class ExchangeFeedConfig {
 export const hooks = {
     WebSocket: WebSocket
 };
-
 export abstract class ExchangeFeed extends Readable {
     protected auth: ExchangeAuthConfig;
     protected url: string;
@@ -100,6 +99,8 @@ export abstract class ExchangeFeed extends Readable {
                 socket.on('message', (msg: any) => {
                     this.handleMessage(msg, product)
                 });
+                socket.on('close', this.killProcess);
+                socket.on('error', this.killProcess);
                 this.sockets.push(socket);
                 this.lastHeartBeat = -1;
             })
@@ -119,6 +120,11 @@ export abstract class ExchangeFeed extends Readable {
 
     protected getWebsocketUrlForProduct(product:string):string {
         throw('implement in subclass');
+    }
+
+    private killProcess(msg) {
+        console.error(msg);
+        process.exit(1);
     }
 
     protected abstract get owner(): string;
