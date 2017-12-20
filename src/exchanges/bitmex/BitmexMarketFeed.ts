@@ -14,7 +14,7 @@
  ***************************************************************************************************************************/
 
 import { ExchangeFeed, ExchangeFeedConfig } from '../ExchangeFeed';
-import { SnapshotMessage, LevelMessage, TradeMessage, ErrorMessage, UnknownMessage } from '../../core/Messages';
+import { SnapshotMessage, LevelMessage, TradeMessage, ErrorMessage } from '../../core/Messages';
 import { BITMEX_WS_FEED } from './BitmexCommon';
 import { Big } from '../../lib/types';
 import { OrderPool } from '../../lib/BookBuilder';
