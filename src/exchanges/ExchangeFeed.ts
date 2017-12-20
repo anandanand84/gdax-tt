@@ -122,7 +122,7 @@ export abstract class ExchangeFeed extends Readable {
         throw('implement in subclass');
     }
 
-    private killProcess(msg) {
+    private killProcess(msg:any) {
         console.error(msg);
         process.exit(1);
     }
