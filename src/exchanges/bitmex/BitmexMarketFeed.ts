@@ -64,10 +64,7 @@ export class BitmexMarketFeed extends ExchangeFeed {
 
         if (msg.error) {
             const errMsg: ErrorMessage = {
-                type: 'error',
-                time: new Date(),
                 message: `Error while subscribing to symbols`,
-                cause: msg.error
             };
 
             this.push(errMsg);
@@ -94,7 +91,7 @@ export class BitmexMarketFeed extends ExchangeFeed {
             this.logger.log('debug', 'Received welcome message from BitMEX WS feed.');
         } else {
             // unhandled/unexpected message
-            const unkMsg: UnknownMessage = {
+            const unkMsg: any = {
                 type: 'unknown',
                 time: new Date(),
                 origin: msg,
