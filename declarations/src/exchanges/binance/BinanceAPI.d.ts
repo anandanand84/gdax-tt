@@ -1,3 +1,4 @@
+/// <reference types="bignumber.js" />
 /***************************************************************************************************************************
  * @license                                                                                                                *
  * Copyright 2017 Coinbase, Inc.                                                                                           *
@@ -11,38 +12,29 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the                      *
  * License for the specific language governing permissions and limitations under the License.                              *
  ***************************************************************************************************************************/
-/**
- * A collection of convenience methods and provider factories using the most common configurations.
- */
-/**
- * Loggers
- */
-export { ConsoleLoggerFactory } from '../utils/Logger';
-/**
- * FXService
- */
-export { SimpleFXServiceFactory, FXProviderFactory } from './fxServiceFactories';
-/**
- * GDAX factories
- */
-import * as GDAX from './gdaxFactories';
-export { GDAX };
-/**
- * Bitfinex factories
- */
-import * as Bitfinex from './bitfinexFactories';
-export { Bitfinex };
-/**
- * Poloniex factories
- */
-import * as Poloniex from './poloniexFactories';
-export { Poloniex };
-/**
- * Bittrex factories
- */
-import * as Bittrex from './bittrexFactories';
-export { Bittrex };
-import * as Binance from './binanceFactories';
-export { Binance };
-import * as Gemini from './geminiFactories';
-export { Gemini };
+import { Product, PublicExchangeAPI, Ticker } from '../PublicExchangeAPI';
+import { ExchangeAuthConfig } from '../AuthConfig';
+import { AuthenticatedExchangeAPI, Balances } from '../AuthenticatedExchangeAPI';
+import { BookBuilder } from '../../lib/BookBuilder';
+import { Logger } from '../../utils/Logger';
+import { PlaceOrderMessage } from '../../core/Messages';
+import { LiveOrder } from '../../lib/Orderbook';
+export declare class BinanceAPI implements PublicExchangeAPI, AuthenticatedExchangeAPI {
+    readonly owner: string;
+    readonly logger: Logger;
+    static product(genericProduct: string): string;
+    static genericProduct(exchangeProduct: string): string;
+    static getMarket(genericProduct: string): any;
+    static getMarketForExchangeProduct(exchangeProduct: string): any;
+    constructor(auth: ExchangeAuthConfig, logger: Logger);
+    loadProducts(): Promise<Product[]>;
+    loadMidMarketPrice(genericProduct: string): Promise<BigNumber.BigNumber>;
+    loadOrderbook(genericProduct: string): Promise<BookBuilder>;
+    loadTicker(genericProduct: string): Promise<Ticker>;
+    placeOrder(order: PlaceOrderMessage): Promise<LiveOrder>;
+    cancelOrder(id: string): Promise<string>;
+    cancelAllOrders(product: string): Promise<string[]>;
+    loadOrder(id: string): Promise<LiveOrder>;
+    loadAllOrders(genericProduct: string): Promise<LiveOrder[]>;
+    loadBalances(): Promise<Balances>;
+}

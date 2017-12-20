@@ -11,38 +11,22 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the                      *
  * License for the specific language governing permissions and limitations under the License.                              *
  ***************************************************************************************************************************/
-/**
- * A collection of convenience methods and provider factories using the most common configurations.
- */
-/**
- * Loggers
- */
-export { ConsoleLoggerFactory } from '../utils/Logger';
-/**
- * FXService
- */
-export { SimpleFXServiceFactory, FXProviderFactory } from './fxServiceFactories';
-/**
- * GDAX factories
- */
-import * as GDAX from './gdaxFactories';
-export { GDAX };
-/**
- * Bitfinex factories
- */
-import * as Bitfinex from './bitfinexFactories';
-export { Bitfinex };
-/**
- * Poloniex factories
- */
-import * as Poloniex from './poloniexFactories';
-export { Poloniex };
-/**
- * Bittrex factories
- */
-import * as Bittrex from './bittrexFactories';
-export { Bittrex };
-import * as Binance from './binanceFactories';
-export { Binance };
-import * as Gemini from './geminiFactories';
-export { Gemini };
+import { ExchangeFeed, ExchangeFeedConfig } from '../ExchangeFeed';
+export declare class BitmexMarketFeed extends ExchangeFeed {
+    readonly owner: string;
+    readonly feedUrl: string;
+    private orderIdMap;
+    private seq;
+    constructor(config: ExchangeFeedConfig);
+    subscribe(productIds: string[]): void;
+    protected onOpen(): void;
+    protected handleMessage(rawMsg: string): void;
+    /**
+     * Gets the next sequence number, incrementing it for the next time it's called.
+     */
+    private getSeq();
+    private handleSnapshot(snapshot);
+    private handleOrderbookUpdate(updates);
+    private handleTrade(trades);
+    private handleSubscriptionSuccess(successMsg);
+}

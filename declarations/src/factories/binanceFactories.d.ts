@@ -11,38 +11,20 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the                      *
  * License for the specific language governing permissions and limitations under the License.                              *
  ***************************************************************************************************************************/
+import { Logger } from '../utils/Logger';
+import { BinanceFeed } from '../exchanges/binance/BinanceFeed';
+import { ExchangeFeedConfig } from '../exchanges/ExchangeFeed';
+import { ExchangeAuthConfig } from '../exchanges/AuthConfig';
 /**
- * A collection of convenience methods and provider factories using the most common configurations.
+ * Convenience function to connect to and subscribe to the given channels. Binance uses SignalR, which handles reconnects for us,
+ * so this is a much simpler function than some of the other exchanges' methods.
  */
+export declare function getSubscribedFeeds(options: ExchangeFeedConfig, products: string[]): Promise<BinanceFeed>;
 /**
- * Loggers
+ * This is a straightforward wrapper around getSubscribedFeeds using the Factory pattern with the most commonly used
+ * defaults. For customised feeds, use getSubscribedFeeds instead. It's really not adding much, but we keep it here
+ * to maintain a consistent method naming strategy amongst all the exchanges
+ *
+ * It is assumed that your API keys are stored in the BINANCE_KEY and BINANCE_SECRET envars
  */
-export { ConsoleLoggerFactory } from '../utils/Logger';
-/**
- * FXService
- */
-export { SimpleFXServiceFactory, FXProviderFactory } from './fxServiceFactories';
-/**
- * GDAX factories
- */
-import * as GDAX from './gdaxFactories';
-export { GDAX };
-/**
- * Bitfinex factories
- */
-import * as Bitfinex from './bitfinexFactories';
-export { Bitfinex };
-/**
- * Poloniex factories
- */
-import * as Poloniex from './poloniexFactories';
-export { Poloniex };
-/**
- * Bittrex factories
- */
-import * as Bittrex from './bittrexFactories';
-export { Bittrex };
-import * as Binance from './binanceFactories';
-export { Binance };
-import * as Gemini from './geminiFactories';
-export { Gemini };
+export declare function FeedFactory(logger: Logger, productIds: string[], auth?: ExchangeAuthConfig): Promise<BinanceFeed>;

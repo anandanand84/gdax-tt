@@ -16,7 +16,8 @@ import { Readable } from 'stream';
 import { Logger } from '../utils/Logger';
 import { ExchangeAuthConfig } from './AuthConfig';
 import { createHmac } from 'crypto';
-import WebSocket = require('ws');
+// import WebSocket = require('ws');
+import * as WebSocket from 'uws';
 import Timer = NodeJS.Timer;
 
 export class ExchangeFeedConfig {
@@ -38,7 +39,9 @@ export abstract class ExchangeFeed extends Readable {
     private connectionChecker: Timer = null;
     private socket: WebSocket;
     private _logger: Logger;
-
+    protected multiSocket: boolean = false;
+    protected sockets: WebSocket[] = [] //only for multisockets
+    
     constructor(config: ExchangeFeedConfig) {
         super({ objectMode: true, highWaterMark: 1024 });
         this._logger = config.logger;
@@ -59,7 +62,7 @@ export abstract class ExchangeFeed extends Readable {
     }
 
     isConnected(): boolean {
-        return this.socket && this.socket.readyState === 1;
+        return (this.socket && this.socket.readyState === 1) || (this.sockets.length > 0);
     }
 
     reconnect(delay: number) {
@@ -83,11 +86,26 @@ export abstract class ExchangeFeed extends Readable {
         this.close();
     }
 
-    protected connect() {
+
+    protected connect(products?:string[]) {
+        console.log('Is multi sockets : ',this.multiSocket)
+        console.log('Products list : ',products)
         if (this.isConnecting || this.isConnected()) {
             return;
         }
         this.isConnecting = true;
+        if(this.multiSocket && products && products.length > 0) {
+            products.forEach((product)=> {
+                const socket = new hooks.WebSocket(this.getWebsocketUrlForProduct(product));
+                socket.on('message', (msg: any) => {
+                    this.handleMessage(msg, product)
+                });
+                this.sockets.push(socket);
+                this.lastHeartBeat = -1;
+            })
+            return;
+        }
+        
         const socket = new hooks.WebSocket(this.url);
         socket.on('message', (msg: any) => this.handleMessage(msg));
         socket.on('open', () => this.onNewConnection());
@@ -99,9 +117,13 @@ export abstract class ExchangeFeed extends Readable {
         this.connectionChecker = setInterval(() => this.checkConnection(30 * 1000), 5 * 1000);
     }
 
+    protected getWebsocketUrlForProduct(product:string):string {
+        throw('implement in subclass');
+    }
+
     protected abstract get owner(): string;
 
-    protected abstract handleMessage(msg: string): void;
+    protected abstract handleMessage(msg: string, product?:string): void;
 
     protected abstract onOpen(): void;
 
@@ -116,7 +138,7 @@ export abstract class ExchangeFeed extends Readable {
                 'error',
                 `The websocket feed to ${this.url} ${this.auth ? '(authenticated)' : ''} has reported an error. If necessary, we will reconnect.`,
                 { error: err }
-            );
+            );``
         if (!this.socket || this.socket.readyState !== 1) {
             this.reconnect(15000);
         } else {

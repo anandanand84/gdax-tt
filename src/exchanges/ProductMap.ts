@@ -46,6 +46,11 @@ export class CCXTProductMap {
             case "Poloniex":
                 this.exchange  = new ccxt.poloniex ()
                 break;
+            case "Gemini":
+                this.exchange  = new ccxt.gemini ()
+                break;
+            default:
+                console.warn(EXCHANGE + ' Exchange not configured for product map ')
         }
         await this.exchange.loadMarkets ();
     }

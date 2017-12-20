@@ -131,6 +131,12 @@
   dependencies:
     "@types/node" "*"
 
+"@types/uws@0.13.0":
+  version "0.13.0"
+  resolved "https://registry.yarnpkg.com/@types/uws/-/uws-0.13.0.tgz#657efe67ae34e417d903ce813a86ec09cd68cbee"
+  dependencies:
+    "@types/node" "*"
+
 "@types/winston@2.2.0":
   version "2.2.0"
   resolved "https://registry.yarnpkg.com/@types/winston/-/winston-2.2.0.tgz#3ca062f1cb8bb5fbcc30d450d5621b57a6e9d42b"
@@ -959,6 +965,14 @@ caseless@~0.12.0:
   version "0.12.0"
   resolved "https://registry.yarnpkg.com/caseless/-/caseless-0.12.0.tgz#1b681c21ff84033c826543090689420d187151dc"
 
+ccxt@^1.10.429:
+  version "1.10.429"
+  resolved "https://registry.yarnpkg.com/ccxt/-/ccxt-1.10.429.tgz#da67aa5485d159629fa87a1c367a15cf422dc1fd"
+  dependencies:
+    crypto-js "3.1.9-1"
+    fetch-ponyfill "^4.1.0"
+    qs "6.5.1"
+
 ccxt@^1.6.88:
   version "1.9.9"
   resolved "https://registry.yarnpkg.com/ccxt/-/ccxt-1.9.9.tgz#70a73f91368ac7d1de3eee39ba4a12e40e04de93"
@@ -1375,6 +1389,12 @@ encodeurl@~1.0.1:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/encodeurl/-/encodeurl-1.0.1.tgz#79e3d58655346909fe6f0f45a5de68103b294d20"
 
+encoding@^0.1.11:
+  version "0.1.12"
+  resolved "https://registry.yarnpkg.com/encoding/-/encoding-0.1.12.tgz#538b66f3ee62cd1ab51ec323829d1f9480c74beb"
+  dependencies:
+    iconv-lite "~0.4.13"
+
 engine.io-client@~3.1.0:
   version "3.1.2"
   resolved "https://registry.yarnpkg.com/engine.io-client/-/engine.io-client-3.1.2.tgz#62a0ef08ec83d16a06668ccc3a4f37916768a6b9"
@@ -1557,6 +1577,12 @@ eyes@0.1.x:
 fast-deep-equal@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/fast-deep-equal/-/fast-deep-equal-1.0.0.tgz#96256a3bc975595eb36d82e9929d060d893439ff"
+
+fetch-ponyfill@^4.1.0:
+  version "4.1.0"
+  resolved "https://registry.yarnpkg.com/fetch-ponyfill/-/fetch-ponyfill-4.1.0.tgz#ae3ce5f732c645eab87e4ae8793414709b239893"
+  dependencies:
+    node-fetch "~1.7.1"
 
 filename-regex@^2.0.0:
   version "2.0.1"
@@ -1947,7 +1973,7 @@ http-signature@~1.2.0:
     jsprim "^1.2.2"
     sshpk "^1.7.0"
 
-iconv-lite@0.4.19:
+iconv-lite@0.4.19, iconv-lite@~0.4.13:
   version "0.4.19"
   resolved "https://registry.yarnpkg.com/iconv-lite/-/iconv-lite-0.4.19.tgz#f7468f60135f5e5dad3399c0a81be9a1603a082b"
 
@@ -2119,7 +2145,7 @@ is-property@^1.0.0:
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/is-property/-/is-property-1.0.2.tgz#57fe1c4e48474edd65b09911f26b1cd4095dda84"
 
-is-stream@^1.1.0:
+is-stream@^1.0.1, is-stream@^1.1.0:
   version "1.1.0"
   resolved "https://registry.yarnpkg.com/is-stream/-/is-stream-1.1.0.tgz#12d4a3dd4e68e0b79ceb8dbc84173ae80d91ca44"
 
@@ -2826,7 +2852,7 @@ nock@9.0.2:
     propagate "0.4.0"
     qs "^6.0.2"
 
-node-bittrex-api@1.0.0:
+node-bittrex-api@0.7.6:
   version "0.7.6"
   resolved "https://registry.yarnpkg.com/node-bittrex-api/-/node-bittrex-api-0.7.6.tgz#d0a2b8e2b27a32f30dc08a4389340f8c43de964f"
   dependencies:
@@ -2839,6 +2865,13 @@ node-bittrex-api@1.0.0:
 node-fetch@2.0.0-alpha.8:
   version "2.0.0-alpha.8"
   resolved "https://registry.yarnpkg.com/node-fetch/-/node-fetch-2.0.0-alpha.8.tgz#f586cf6730ce30431c7d4528ce561d81add8ba90"
+
+node-fetch@~1.7.1:
+  version "1.7.3"
+  resolved "https://registry.yarnpkg.com/node-fetch/-/node-fetch-1.7.3.tgz#980f6f72d85211a5347c6b2bc18c5b84c3eb47ef"
+  dependencies:
+    encoding "^0.1.11"
+    is-stream "^1.0.1"
 
 node-uuid@~1.4.7:
   version "1.4.8"
@@ -4155,6 +4188,10 @@ uuid@3.0.0:
 uuid@^3.1.0:
   version "3.1.0"
   resolved "https://registry.yarnpkg.com/uuid/-/uuid-3.1.0.tgz#3dd3d3e790abc24d7b0d3a034ffababe28ebbc04"
+
+uws@9.14.0:
+  version "9.14.0"
+  resolved "https://registry.yarnpkg.com/uws/-/uws-9.14.0.tgz#fac8386befc33a7a3705cbd58dc47b430ca4dd95"
 
 uws@~0.14.4:
   version "0.14.5"

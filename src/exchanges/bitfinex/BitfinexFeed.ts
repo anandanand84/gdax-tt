@@ -222,6 +222,7 @@ export class BitfinexFeed extends ExchangeFeed {
             case 'book':
                 return handle_book_message(msg);
             case 'trades':
+                console.log(msg);
                 return handle_trade_message(msg);
             case 'auth':
                 return handle_auth_message(msg);

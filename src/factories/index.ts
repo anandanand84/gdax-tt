@@ -55,3 +55,9 @@ export  { Poloniex };
 
 import * as Bittrex from './bittrexFactories';
 export  { Bittrex };
+
+import * as Binance from './binanceFactories';
+export  { Binance };
+
+import * as Gemini from './geminiFactories';
+export  { Gemini };
