@@ -6,7 +6,6 @@
     "noImplicitAny": true,
     "noImplicitReturns": true,
     "noImplicitThis": true,
-    "noUnusedLocals": true,
     "strictNullChecks": false,
     "experimentalDecorators": true,
     "outDir": "build",

@@ -11,19 +11,41 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the                      *
  * License for the specific language governing permissions and limitations under the License.                              *
  ***************************************************************************************************************************/
-import { Logger } from '../utils/Logger';
-import { BinanceFeed } from '../exchanges/binance/BinanceFeed';
-import { ExchangeAuthConfig } from '../exchanges/AuthConfig';
-/**
- * Convenience function to connect to and subscribe to the given channels. Binance uses SignalR, which handles reconnects for us,
- * so this is a much simpler function than some of the other exchanges' methods.
- */
-export declare function getSubscribedFeeds(options: any, products: string[]): Promise<BinanceFeed>;
-/**
- * This is a straightforward wrapper around getSubscribedFeeds using the Factory pattern with the most commonly used
- * defaults. For customised feeds, use getSubscribedFeeds instead. It's really not adding much, but we keep it here
- * to maintain a consistent method naming strategy amongst all the exchanges
- *
- * It is assumed that your API keys are stored in the BINANCE_KEY and BINANCE_SECRET envars
- */
-export declare function FeedFactory(logger: Logger, productIds: string[], auth?: ExchangeAuthConfig): Promise<BinanceFeed>;
+import { ExchangeAuthConfig } from '../AuthConfig';
+import { Logger } from '../../utils/Logger';
+import { ExchangeFeedConfig } from '../ExchangeFeed';
+export interface BinanceConfig {
+    apiUrl?: string;
+    auth?: ExchangeAuthConfig;
+    logger: Logger;
+}
+export interface BinanceFeedConfig extends ExchangeFeedConfig {
+    products: string[];
+}
+export interface BinanceMessage {
+    e: string;
+    E: number;
+    s: string;
+}
+export interface BinanceTradeMessage extends BinanceMessage {
+    t: number;
+    p: string;
+    q: string;
+    b: number;
+    a: number;
+    T: number;
+    m: true;
+    M: true;
+}
+export interface BinanceDepthMessage extends BinanceMessage {
+    "U": number;
+    "u": number;
+    "b": any[];
+    "a": any[];
+}
+export interface BinanceSnapshotMessage extends BinanceMessage {
+    lastUpdateId: number;
+    s: string;
+    bids: any[];
+    asks: any[];
+}

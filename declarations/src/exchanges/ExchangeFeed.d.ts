@@ -29,7 +29,7 @@ export declare abstract class ExchangeFeed extends Readable {
     protected auth: ExchangeAuthConfig;
     protected url: string;
     protected isConnecting: boolean;
-    private lastHeartBeat;
+    protected lastHeartBeat: number;
     private connectionChecker;
     private socket;
     private _logger;
@@ -43,7 +43,7 @@ export declare abstract class ExchangeFeed extends Readable {
     disconnect(): void;
     protected connect(products?: string[]): void;
     protected getWebsocketUrlForProduct(product: string): string;
-    private killProcess(msg);
+    protected killProcess(msg: any): void;
     protected readonly abstract owner: string;
     protected abstract handleMessage(msg: string, product?: string): void;
     protected abstract onOpen(): void;

@@ -15,7 +15,7 @@ import { ProductMap } from '../exchanges/ProductMap';
 
 import { Logger } from '../utils/Logger';
 import { BinanceFeed } from '../exchanges/binance/BinanceFeed';
-import { ExchangeFeedConfig } from '../exchanges/ExchangeFeed';
+import { BinanceFeedConfig } from '../exchanges/binance/BinanceInterfaces';
 import { ExchangeAuthConfig } from '../exchanges/AuthConfig';
 
 
@@ -28,15 +28,11 @@ function getExchangeProduct(genericProduct:string):string {
  * Convenience function to connect to and subscribe to the given channels. Binance uses SignalR, which handles reconnects for us,
  * so this is a much simpler function than some of the other exchanges' methods.
  */
-export function getSubscribedFeeds(options: ExchangeFeedConfig, products: string[]): Promise<BinanceFeed> {
+export function getSubscribedFeeds(options: any, products: string[]): Promise<BinanceFeed> {
+    options.products = products;
     return new Promise((resolve, reject) => {
         const feed: BinanceFeed = new BinanceFeed(options);
-        const timeout = setTimeout(() => {
-            return reject(new Error('TIMEOUT. Could not connect to Binance Feed server'));
-        }, 30000);
         feed.on('websocket-connection', () => {
-            feed.subscribe(products);
-            clearTimeout(timeout);
             return resolve(feed);
         });
     });

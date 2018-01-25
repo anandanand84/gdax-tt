@@ -1,3 +1,4 @@
+'use strict';
 /***************************************************************************************************************************
  * @license                                                                                                                *
  * Copyright 2017 Coinbase, Inc.                                                                                           *
@@ -11,317 +12,324 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the                      *
  * License for the specific language governing permissions and limitations under the License.                              *
  ***************************************************************************************************************************/
-
-import { ExchangeFeed, ExchangeFeedConfig } from '../ExchangeFeed';
-import { LevelMessage, SnapshotMessage, TickerMessage, TradeMessage } from '../../core/Messages';
 import { BinanceAPI } from './BinanceAPI';
-import { Big } from '../../lib/types';
+import { ProductMap } from '../';
+import { ExchangeFeed } from '../ExchangeFeed';
+import { SnapshotMessage, LevelMessage, TradeMessage, StreamMessage } from '../../core/Messages';
 import { OrderPool } from '../../lib/BookBuilder';
 import { Level3Order, PriceLevelWithOrders } from '../../lib/Orderbook';
+import { Big } from '../../lib/types';
+import WebSocket = require('ws');
+import * as request from 'request-promise';
+import * as GI from './BinanceInterfaces';
+import { BinanceMessage, BinanceSnapshotMessage, BinanceTradeMessage, BinanceDepthMessage } from './BinanceInterfaces';
 
-var wait = async function(time:number) {
-    return new Promise((resolve, reject)=> {
-        setTimeout(resolve, time)
-    });
-}
+export const BINANCE_WS_FEED = `wss://stream.binance.com:9443/ws/`;
 
-var retryCount = process.env.RETRY_COUNT || 1;
-
-export class BinanceFeed extends ExchangeFeed {
-    private client: any;
-    private connection: any;
-    private counters: { [product: string]: MessageCounter };
-    private erroredProducts: Set<string> = new Set<string>();
-
-    constructor(config: ExchangeFeedConfig) {
-        super(config);
-        this.url = config.wsUrl || 'wss://socket.Binance.com/signalr';
-        this.counters = {};
-    }
-
-    get owner(): string {
-        return 'Binance';
-    }
-
-    async subscribe(products: string[]): Promise<boolean> {
-        if (!this.connection) {
-            return false;
-        }
-        let index = 1;
-        console.log('Subscribe started @ ', new Date())
-        for (let product of products) {
-            await wait(300);
-            this.log('info', `Subscribing product ${product} at ${index} of ${products.length}`)
-            index++;
-            await new Promise((resolve, reject) => {
-                this.client.call('CoreHub', 'SubscribeToExchangeDeltas', product).done((err: Error, result: boolean) => {
-                    if (err) {
-                        this.erroredProducts.add(product)
-                        console.log('Error occured');
-                        resolve(false)
-                        return console.error(err);
-                    }
-                    if (result === true) {
-                        this.log('info', `Subscribed to ${product} on ${this.owner}, requesting snaphsot.`);
-                        this.client.call('CoreHub', 'queryExchangeState', product).done((err: Error, data: any) => {
-                            this.log('info', `Snapshot received for ${product} on ${this.owner}`);
-                            const snapshot: SnapshotMessage = this.processSnapshot(product, data);
-                            if(snapshot !== null) {
-                                this.push(snapshot);
-                            }else {
-                                this.erroredProducts.add(product)
-                                console.warn('Null received for snapshot for product ', product, 'raw message', data);
-                            } 
-                            resolve(true)
-                        });
-                    }
-                });
-            });
-        }
-        if(this.erroredProducts.size > 0) {
-            console.log(`${this.erroredProducts.size} products errored retrying ....`);
-            if(retryCount > 0) {
-                retryCount--;
-                this.subscribe(Array.from(this.erroredProducts));
-            } else {
-                console.log('No more retry available');
-                console.log('could not subscribe following products ', Array.from(this.erroredProducts))    
-            };
-            this.erroredProducts.clear();
-        } else {
-            console.log('All products subscribed');
-            console.log('Subscribe completed @ ', new Date())
-        }
-        return true;
-    }
-
-    protected async connect() {
-        this.emit('websocket-connection');
-    }
-
-    protected handleMessage(msg: any): void {
-        if (msg.type !== 'utf8' || !msg.utf8Data) {
-            return;
-        }
-        let data;
-        try {
-            data = JSON.parse(msg.utf8Data);
-        } catch (err) {
-            this.log('debug', 'Error parsing feed message', msg.utf8Data);
-            return;
-        }
-        if (!Array.isArray(data.M)) {
-            return;
-        }
-        this.confirmAlive();
-        data.M.forEach((message: any) => {
-            this.processMessage(message);
-        });
-    }
-
-    protected onOpen(): void {
-        // no-op
-    }
-
-    protected onClose(code: number, reason: string): void {
-        console.log('Websocket connectFailed');
-        this.emit('websocket-closed');
-        this.connection = null;
-    }
-
-    protected close() {
-        this.client.end();
-    }
-
-    private nextSequence(product: string): number {
-        let counter: MessageCounter = this.counters[product];
-        if (!counter) {
-            counter = this.counters[product] = { base: -1, offset: 0 };
-        }
-        if (counter.base < 1) {
-            console.warn(`Requesting next sequence without setting snapshot sequence for product ${product}, current counter offset ${counter.offset}`);
-            return -1;
-        }
-        counter.offset += 1;
-        return counter.base + counter.offset;
-    }
-
-    private setSnapshotSequence(product: string, sequence: number): void {
-        let counter: MessageCounter = this.counters[product];
-        if (!counter) {
-            counter = this.counters[product] = { base: -1, offset: 0 };
-        }
-        counter.base = sequence;
-    }
-
-    private getSnapshotSequence(product: string): number {
-        const counter: MessageCounter = this.counters[product];
-        return counter ? counter.base : -1;
-    }
-
-    private processMessage(message: any) {
-        switch (message.M) {
-            case 'updateExchangeState':
-                this.updateExchangeState(message.A as BinanceExchangeState[]);
-                break;
-            case 'updateSummaryState':
-                const tickers: BinanceTicker[] = message.A[0].Deltas || [];
-                this.updateTickers(tickers);
-                break;
-            default:
-                this.log('debug', `Unknown message type: ${message.M}`);
-        }
-    }
-
-    private updateExchangeState(states: BinanceExchangeState[]) {
-
-        const createUpdateMessage = (genericProduct: string, side: string, nonce: number, delta: BinanceOrder): LevelMessage => {
-            const seq = this.nextSequence(genericProduct);
-            const message: LevelMessage = {
-                type: 'level',
-                time: new Date(),
-                sequence: seq,
-                sourceSequence: nonce,
-                productId: genericProduct,
-                side: side,
-                price: delta.Rate,
-                size: delta.Quantity,
-                count: 1
-            };
-            return message;
-        };
-
-        states.forEach((state: BinanceExchangeState) => {
-            const product = state.MarketName;
-            let genericProduct = BinanceAPI.genericProduct(product);
-            const snaphotSeq = this.getSnapshotSequence(genericProduct);
-            if (state.Nounce <= snaphotSeq) {
-                return;
-            }
-            state.Buys.forEach((delta: BinanceOrder) => {
-                const msg: LevelMessage = createUpdateMessage(genericProduct, 'buy', state.Nounce, delta);
-                this.push(msg);
-            });
-            state.Sells.forEach((delta: BinanceOrder) => {
-                const msg: LevelMessage = createUpdateMessage(genericProduct, 'sell', state.Nounce, delta);
-                this.push(msg);
-            });
-            state.Fills.forEach((fill: BinanceFill) => {
-                const message: TradeMessage = {
-                    type: 'trade',
-                    productId: genericProduct,
-                    time: new Date(fill.TimeStamp),
-                    tradeId: '0',
-                    price: fill.Rate,
-                    size: fill.Quantity,
-                    side: fill.OrderType.toLowerCase()
-                };
-                this.push(message);
-            });
-        });
-    }
-
-    private updateTickers(tickers: BinanceTicker[]) {
-        tickers.forEach((BinanceTicker: BinanceTicker) => {
-            const ticker: TickerMessage = {
-                type: 'ticker',
-                productId: BinanceAPI.genericProduct(BinanceTicker.MarketName),
-                bid: Big(BinanceTicker.Bid),
-                ask: Big(BinanceTicker.Ask),
-                time: new Date(BinanceTicker.TimeStamp),
-                price: Big(BinanceTicker.Last),
-                volume: Big(BinanceTicker.Volume)
-            };
-            this.push(ticker);
-        });
-    }
-
-    private processSnapshot(product: string, state: BinanceExchangeState): SnapshotMessage {
-        try {
-            if(state) {
-                let genericProduct = BinanceAPI.genericProduct(product);
-                const orders: OrderPool = {};
-                const snapshotMessage: SnapshotMessage = {
-                    type: 'snapshot',
-                    time: new Date(),
-                    productId: genericProduct,
-                    sequence: state.Nounce,
-                    asks: [],
-                    bids: [],
-                    orderPool: orders
-                };
-                state.Buys.forEach((order: BinanceOrder) => {
-                    addOrder(order, 'buy', snapshotMessage.bids);
-                });
-                state.Sells.forEach((order: BinanceOrder) => {
-                    addOrder(order, 'sell', snapshotMessage.asks);
-                });
-                this.setSnapshotSequence(genericProduct, state.Nounce);
-                return snapshotMessage;
-        
-                function addOrder(order: BinanceOrder, side: string, levelArray: PriceLevelWithOrders[]) {
-                    const size = Big(order.Quantity);
-                    const newOrder: Level3Order = {
-                        id: String(order.Rate),
-                        price: Big(order.Rate),
-                        size: size,
-                        side: side
-                    };
-                    const newLevel: PriceLevelWithOrders = {
-                        price: newOrder.price,
-                        totalSize: size,
-                        orders: [newOrder]
-                    };
-                    levelArray.push(newLevel);
-                }
-            }
-            return null;
-        }catch(err) {
-            console.log('Failed to process snapshot for ', product);
-            console.error(err)
-            return null;
-        }
-    }
-}
+// hooks for replacing libraries if desired
+const hooks = {
+    WebSocket: WebSocket
+};
 
 interface MessageCounter {
     base: number;
     offset: number;
 }
 
-interface BinanceFill {
-    OrderType: string;
-    Rate: string;
-    Quantity: string;
-    TimeStamp: string;
-}
 
-interface BinanceOrder {
-    Rate: string;
-    Quantity: string;
-    Type: number;
-}
+var retryCount = process.env.RETRY_COUNT || 1;
 
-interface BinanceExchangeState {
-    MarketName: string;
-    Nounce: number;
-    Buys: any[];
-    Sells: any[];
-    Fills: any[];
-}
+export class BinanceFeed extends ExchangeFeed {
+    readonly owner: string;
+    readonly feedUrl: string;
+    protected lastHeartBeat: number = -1;
+    private counters: { [product: string]: number } = {};
+    private sequences : { [product: string]: number } = {};
+    protected initialMessagesQueue: { [product: string]: BinanceMessage[] } = {};
+    protected depthsockets:  { [product: string]: WebSocket } = {};
+    protected tradesockets:  { [product: string]: WebSocket } = {};
+    private MAX_QUEUE_LENGTH: number = 1000;
+    private erroredProducts: Set<string> = new Set<string>();
 
-interface BinanceTicker {
-    MarketName: string;
-    High: number;
-    Low: number;
-    Volume: number;
-    Last: number;
-    BaseVolume: number;
-    TimeStamp: string;
-    Bid: number;
-    Ask: number;
-    OpenBuyOrders: number;
-    OpenSellOrders: number;
-    PrevDay: number;
-    Created: string;
+    constructor(config: GI.BinanceFeedConfig) {
+        super(config);
+        this.owner = 'Binance';
+        this.multiSocket = true;
+        this.feedUrl = BINANCE_WS_FEED;
+        this.connect(config.products);
+    }
+
+    protected getWebsocketUrlForProduct(product:string):string {
+        return BINANCE_WS_FEED+product.toLowerCase()+'@depth';
+    }
+
+    protected async connect(products?:string[]) {
+        console.log('Is multi sockets : ',this.multiSocket)
+        console.log('Products list : ',products)
+        if (this.isConnecting || this.isConnected()) {
+            return;
+        }
+        this.isConnecting = true;
+        var index = 0;
+        setTimeout(()=> {
+            this.emit('websocket-connection');
+        },3000)
+        if(this.multiSocket && products && products.length > 0) {
+            for(let product of products) {
+                index++;
+                this.counters[product] = -1;
+                this.initialMessagesQueue[product] = [];
+                if(index % 5 === 0) {
+                    await new Promise((resolve)=> setTimeout(resolve, 10000));
+                }
+                await this.subscribeProduct(product);
+            }
+            if(this.erroredProducts.size > 0) {
+                console.log('=========================================================================');
+                console.log('could not subscribe following products ', Array.from(this.erroredProducts))    
+                console.log('=========================================================================');
+            } else {
+                console.log('=========================================================================');
+                console.log('All products subscribed');
+                console.log('Subscribe completed @ ', new Date())
+                console.log('=========================================================================');
+            }
+            return;
+        }
+    }
+
+    async subscribeProduct(product:string) {
+        try {
+            var oldTradeSocket:WebSocket = this.tradesockets[product];
+            var oldDepthSocket:WebSocket = this.depthsockets[product];
+            if(oldTradeSocket) {
+                (oldTradeSocket as any).active = false;
+                (oldTradeSocket as any).close()
+            }
+            if(oldDepthSocket) {
+                (oldDepthSocket as any).active = false;
+                oldDepthSocket.close()
+            }
+            var depthUrl = this.getWebsocketUrlForProduct(product);
+            console.log('connecting to ',this.getWebsocketUrlForProduct(product))
+            const depthSocket = new hooks.WebSocket(depthUrl);
+            depthSocket.on('message', (msg: any) => {
+                this.handleDepthMessages(msg, product)
+            });
+            depthSocket.on('close', (data:any)=> {
+                if((depthSocket as any).active) {
+                    console.log('Active Depth socket closed resubscribing',product, data)
+                    this.subscribeProduct(product)
+                }else {
+                    console.log('Inactive Depth socket closed ignoring',product,  data)
+                }
+            });
+            depthSocket.on('error', (data:any)=> {
+                if((depthSocket as any).active) {
+                    console.log('Active Depth socket errored resubscribing',product, data)
+                    this.subscribeProduct(product)
+                } else {
+                    console.log('Inactive Depth socket errored ignoring',product,  data)
+                }
+            });
+            const tradesocket = new hooks.WebSocket(BINANCE_WS_FEED+product.toLowerCase()+'@trade');
+            console.log('connecting to ', BINANCE_WS_FEED+product.toLowerCase()+'@trade')
+            tradesocket.on('message', (msg: any) => {
+                this.handleTradeMessages(msg, product)
+            });
+            tradesocket.on('close', (data:any)=> {
+                if((depthSocket as any).active) {
+                    console.log('Active Trade socket closed resubscribing',product, data)
+                    this.subscribeProduct(product)
+                } else {
+                    console.log('Inactive Trade socket closed ignoring',product,  data)
+                }
+            });
+            tradesocket.on('error', (data:any)=> {
+                if((depthSocket as any).active) {
+                    console.log('Active Trade socket errored resubscribing',product, data)
+                    this.subscribeProduct(product)
+                } else {
+                    console.log('Inactive Trade socket errored ignoring',product,  data)
+                }
+            });
+            this.tradesockets[product] = tradesocket;
+            this.depthsockets[product] = depthSocket;
+            request(`https://www.binance.com/api/v1/depth?symbol=${product.toUpperCase()}&limit=1000`, { json : true }).then((depthSnapshot) => {
+                this.handleSnapshotMessage(depthSnapshot, product);
+            }).catch((err)=> {
+                this.erroredProducts.add(product)
+                console.error(err);
+            })
+        }catch(err) {
+            this.erroredProducts.add(product)
+            console.error(err);
+        }
+    }
+
+    protected handleMessage() {
+
+    }
+
+    protected handleSnapshotMessage(msg:BinanceSnapshotMessage, productId?:string) : void {
+        var binanceMessage:BinanceSnapshotMessage = msg;
+        binanceMessage.s = productId
+        this.counters[productId] = binanceMessage.lastUpdateId + 1;
+        let message = this.createSnapshotMessage(binanceMessage);
+        this.push(message);
+    }
+
+    protected handleTradeMessages(msg: string, productId?:string) : void {
+        var binanceTradeMessage: BinanceTradeMessage = JSON.parse(msg);
+        const message: TradeMessage = {
+            type: 'trade',
+            productId: BinanceAPI.genericProduct(binanceTradeMessage.s),
+            time: new Date(+binanceTradeMessage.E),
+            tradeId: binanceTradeMessage.t.toString(),
+            price: binanceTradeMessage.p,
+            size: binanceTradeMessage.q,
+            side: binanceTradeMessage.m ? 'sell' : 'buy'
+        };
+        this.push(message);
+    }
+    
+    protected handleDepthMessages(msg: string, productId?:string) : void {
+        var binanceDepthMessage:BinanceDepthMessage = JSON.parse(msg);
+        var messageQueue = this.initialMessagesQueue[productId];
+        let counter = this.counters[productId];
+        if(counter > -1) {
+            //flush all the messages
+            let message:BinanceDepthMessage = <BinanceDepthMessage>messageQueue.pop()
+            while(message) {
+                if(message.u <= (counter - 1)) {
+                    message = <BinanceDepthMessage>messageQueue.pop();
+                    continue;
+                } else if(message.U <= counter && message.u >= counter) {
+                    this.processLevelMessage(message);
+                    this.counters[productId] = (message.u + 1);
+                    counter = (message.u + 1);
+                    message = <BinanceDepthMessage>messageQueue.pop();
+                } else {
+                    console.warn(`Queued message doenst match the request criteria for product ${productId} restarting`)
+                    this.counters[productId] = -1;
+                    counter = -1;
+                    this.subscribeProduct(productId);
+                    return;
+                }
+            }
+            if(binanceDepthMessage.U > counter ) {
+                console.warn(`Skipped message for product ${productId} restarting feed Expected : ${counter} got ${binanceDepthMessage.U}`);
+                this.counters[productId] = -1;
+                counter = -1;
+                this.subscribeProduct(productId);
+            } else {
+                this.counters[productId] = (binanceDepthMessage.u + 1);
+                counter = (binanceDepthMessage.u + 1);
+                this.processLevelMessage(binanceDepthMessage);
+            }
+        } else if(this.initialMessagesQueue[productId].length > this.MAX_QUEUE_LENGTH) {
+            this.initialMessagesQueue[productId] = [];
+            console.warn('Max queue length reached restarting feed for ', productId);
+            this.counters[productId] = -1;
+            counter = -1;
+            this.subscribeProduct(productId);
+            return;
+        } else {
+            messageQueue.push(binanceDepthMessage);
+        }
+    }
+
+    nextSequence(prodcutId:string) {
+        var seq = this.sequences[prodcutId] + 1;
+        this.sequences[prodcutId] = seq;
+        return seq;
+    }
+
+    processLevelMessage(depthMessage:BinanceDepthMessage) {
+        var genericProduct = BinanceAPI.genericProduct(depthMessage.s);
+        depthMessage.b.forEach((level)=> {
+            const seq = this.nextSequence(depthMessage.s)
+            const message: LevelMessage = {
+                type: 'level',
+                productId: genericProduct,
+                time: new Date(+depthMessage.E),
+                price: level[0],
+                size: level[1],
+                sequence: seq,
+                side: 'buy',
+                count: 1
+            };
+            this.push(message)
+        })
+        depthMessage.a.forEach((level)=> {
+            const seq = this.nextSequence(depthMessage.s)
+            const message: LevelMessage = {
+                type: 'level',
+                productId: genericProduct,
+                time: new Date(+depthMessage.E),
+                price: level[0],
+                size: level[1],
+                sequence: seq,
+                side: 'sell',
+                count: 1
+            };
+            this.push(message)
+        })
+    }
+
+    protected onOpen(): void {
+        // Do nothing for now
+    }
+
+    private createSnapshotMessage(msg: GI.BinanceSnapshotMessage): SnapshotMessage {
+        this.sequences[msg.s] = 0;
+        const orders: OrderPool = {};
+        const snapshotMessage: SnapshotMessage = {
+            type: 'snapshot',
+            time: new Date(),
+            productId: BinanceAPI.genericProduct(msg.s),
+            sequence: 0,
+            sourceSequence : msg.lastUpdateId,
+            asks: [],
+            bids: [],
+            orderPool: orders
+        };
+        msg.bids.forEach((level)=> {
+            let price = level[0];
+            let size = level[1];
+            const newOrder: Level3Order = {
+                id: price,
+                price: Big(price),
+                size: Big(size),
+                side: 'buy'
+            };
+            const priceLevel: PriceLevelWithOrders = {
+                price: Big(price),
+                totalSize: Big(size),
+                orders: [newOrder]
+            };
+            snapshotMessage.bids.push(priceLevel);
+            orders[newOrder.id] = newOrder;
+        })
+
+        msg.asks.forEach((level)=> {
+            let price = level[0];
+            let size = level[1];
+            const newOrder: Level3Order = {
+                id: price,
+                price: Big(price),
+                size: Big(size),
+                side: 'sell'
+            };
+            const priceLevel: PriceLevelWithOrders = {
+                price: Big(price),
+                totalSize: Big(size),
+                orders: [newOrder]
+            };
+            snapshotMessage.asks.push(priceLevel);
+            orders[newOrder.id] = newOrder;
+        })
+        
+        return snapshotMessage;
+    }
 }

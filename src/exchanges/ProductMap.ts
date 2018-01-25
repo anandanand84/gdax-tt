@@ -34,6 +34,9 @@ export class CCXTProductMap {
     async configureProductMap(exchangeToConfigure:string) {
         const EXCHANGE = process.env.Exchange || exchangeToConfigure;
         switch(EXCHANGE) {
+            case "Binance":
+                this.exchange = new ccxt.binance()
+                break;
             case "GDAX":
                 this.exchange = new ccxt.gdax()
                 break;

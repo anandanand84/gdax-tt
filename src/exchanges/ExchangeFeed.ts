@@ -34,7 +34,7 @@ export abstract class ExchangeFeed extends Readable {
     protected auth: ExchangeAuthConfig;
     protected url: string;
     protected isConnecting: boolean;
-    private lastHeartBeat: number = -1;
+    protected lastHeartBeat: number = -1;
     private connectionChecker: Timer = null;
     private socket: WebSocket;
     private _logger: Logger;
@@ -122,7 +122,7 @@ export abstract class ExchangeFeed extends Readable {
         throw('implement in subclass');
     }
 
-    private killProcess(msg:any) {
+    protected killProcess(msg:any) {
         console.error(msg);
         process.exit(1);
     }

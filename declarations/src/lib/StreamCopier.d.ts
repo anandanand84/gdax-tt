@@ -23,11 +23,11 @@ import { EventEmitter } from 'events';
  * trapdoor).
  */
 export declare class StreamCopier extends EventEmitter {
-    private feed;
     private outputs;
     private bufferStreams;
     private numConnected;
     private numOutputs;
+    private feed;
     /**
      * Create a new StreamCopier. `numOutputs` reserves that many outward conections for streams and will buffer messages
      * until a downstream consumer is attached.

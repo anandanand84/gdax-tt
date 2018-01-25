@@ -1,35 +1,36 @@
-/***************************************************************************************************************************
- * @license                                                                                                                *
- * Copyright 2017 Coinbase, Inc.                                                                                           *
- *                                                                                                                         *
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance          *
- * with the License. You may obtain a copy of the License at                                                               *
- *                                                                                                                         *
- * http://www.apache.org/licenses/LICENSE-2.0                                                                              *
- *                                                                                                                         *
- * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on     *
- * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the                      *
- * License for the specific language governing permissions and limitations under the License.                              *
- ***************************************************************************************************************************/
-import { ExchangeFeed, ExchangeFeedConfig } from '../ExchangeFeed';
+/// <reference types="ws" />
+import { ExchangeFeed } from '../ExchangeFeed';
+import WebSocket = require('ws');
+import * as GI from './BinanceInterfaces';
+import { BinanceMessage, BinanceSnapshotMessage, BinanceDepthMessage } from './BinanceInterfaces';
+export declare const BINANCE_WS_FEED: string;
 export declare class BinanceFeed extends ExchangeFeed {
-    private client;
-    private connection;
-    private counters;
-    private erroredProducts;
-    constructor(config: ExchangeFeedConfig);
     readonly owner: string;
-    subscribe(products: string[]): Promise<boolean>;
-    protected connect(): Promise<void>;
-    protected handleMessage(msg: any): void;
+    readonly feedUrl: string;
+    protected lastHeartBeat: number;
+    private counters;
+    private sequences;
+    protected initialMessagesQueue: {
+        [product: string]: BinanceMessage[];
+    };
+    protected depthsockets: {
+        [product: string]: WebSocket;
+    };
+    protected tradesockets: {
+        [product: string]: WebSocket;
+    };
+    private MAX_QUEUE_LENGTH;
+    private erroredProducts;
+    constructor(config: GI.BinanceFeedConfig);
+    protected getWebsocketUrlForProduct(product: string): string;
+    protected connect(products?: string[]): Promise<void>;
+    subscribeProduct(product: string): Promise<void>;
+    protected handleMessage(): void;
+    protected handleSnapshotMessage(msg: BinanceSnapshotMessage, productId?: string): void;
+    protected handleTradeMessages(msg: string, productId?: string): void;
+    protected handleDepthMessages(msg: string, productId?: string): void;
+    nextSequence(prodcutId: string): number;
+    processLevelMessage(depthMessage: BinanceDepthMessage): void;
     protected onOpen(): void;
-    protected onClose(code: number, reason: string): void;
-    protected close(): void;
-    private nextSequence(product);
-    private setSnapshotSequence(product, sequence);
-    private getSnapshotSequence(product);
-    private processMessage(message);
-    private updateExchangeState(states);
-    private updateTickers(tickers);
-    private processSnapshot(product, state);
+    private createSnapshotMessage(msg);
 }

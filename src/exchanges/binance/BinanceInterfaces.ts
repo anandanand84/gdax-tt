@@ -11,19 +11,48 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the                      *
  * License for the specific language governing permissions and limitations under the License.                              *
  ***************************************************************************************************************************/
-import { Logger } from '../utils/Logger';
-import { BinanceFeed } from '../exchanges/binance/BinanceFeed';
-import { ExchangeAuthConfig } from '../exchanges/AuthConfig';
-/**
- * Convenience function to connect to and subscribe to the given channels. Binance uses SignalR, which handles reconnects for us,
- * so this is a much simpler function than some of the other exchanges' methods.
- */
-export declare function getSubscribedFeeds(options: any, products: string[]): Promise<BinanceFeed>;
-/**
- * This is a straightforward wrapper around getSubscribedFeeds using the Factory pattern with the most commonly used
- * defaults. For customised feeds, use getSubscribedFeeds instead. It's really not adding much, but we keep it here
- * to maintain a consistent method naming strategy amongst all the exchanges
- *
- * It is assumed that your API keys are stored in the BINANCE_KEY and BINANCE_SECRET envars
- */
-export declare function FeedFactory(logger: Logger, productIds: string[], auth?: ExchangeAuthConfig): Promise<BinanceFeed>;
+
+import { ExchangeAuthConfig } from '../AuthConfig';
+import { Logger } from '../../utils/Logger';
+import { ExchangeFeedConfig } from '../ExchangeFeed';
+
+export interface BinanceConfig {
+    apiUrl?: string;
+    auth?: ExchangeAuthConfig;
+    logger: Logger;
+}
+
+export interface BinanceFeedConfig extends ExchangeFeedConfig {
+    products: string[];
+}
+
+export interface BinanceMessage {
+    e: string; //Event type
+    E: number; //Event time
+    s: string; //Symbol
+}
+
+export interface BinanceTradeMessage extends BinanceMessage {
+    t : number; //trade id
+    p : string,     // Price
+    q : string,       // Quantity
+    b : number,          // Buyer order Id
+    a : number,          // Seller order Id
+    T : number,   // Trade time
+    m : true,        // Is the buyer the market maker?
+    M : true         // Ignore.
+}
+
+export interface BinanceDepthMessage extends BinanceMessage {
+    "U": number,           // First update ID in event
+    "u": number,           // Final update ID in event
+    "b": any[],
+    "a": any[]               // Asks to be updated
+}
+
+export interface BinanceSnapshotMessage extends BinanceMessage {
+    lastUpdateId : number;
+    s : string; //Not coming from binance will be updated in the message
+    bids : any[];
+    asks : any[];
+}
