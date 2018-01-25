@@ -59,6 +59,8 @@
     "node-bittrex-api": "0.7.6",
     "pushbullet": "2.0.0",
     "querystring": "0.2.0",
+    "request": "2.83.0",
+    "request-promise": "4.2.2",
     "simple-mock": "0.8.0",
     "superagent": "3.0.0",
     "tlab-trading-toolkit": "^0.1.14",
