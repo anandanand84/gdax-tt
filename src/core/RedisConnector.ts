@@ -16,6 +16,10 @@ export function getRedisct() {
     return redis; 
 }
 
+export function getPubSubClient() {
+    return (<any>redisct)(redisPubsubHost, redisPubsubPort, redisPubsubPassword).createNewPubSubClient();; 
+}
+
 export function getEmitter() {
     var io = (<any>redisct)(redisPubsubHost, redisPubsubPort, redisPubsubPassword)
         .createNewEmitter('REDIS CONNECTOR');
