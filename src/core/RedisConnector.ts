@@ -17,11 +17,11 @@ export function getRedisct() {
 }
 
 export function getPubSubClient() {
-    return (<any>redisct)(redisPubsubHost, redisPubsubPort, redisPubsubPassword).createNewPubSubClient();; 
+    return (<any>redisct)(redisPubsubHost, redisPubsubPort, redisPubsubPassword, false).createNewPubSubClient();; 
 }
 
 export function getEmitter() {
-    var io = (<any>redisct)(redisPubsubHost, redisPubsubPort, redisPubsubPassword)
+    var io = (<any>redisct)(redisPubsubHost, redisPubsubPort, redisPubsubPassword, false)
         .createNewEmitter('REDIS CONNECTOR');
     return io;
 }

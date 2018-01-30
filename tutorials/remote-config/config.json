@@ -3,12 +3,12 @@
       "cache": {
         "host": "localhost",
         "password": "none",
-        "port": 6379
+        "port": 7000
       },
       "pubsub": {
         "host": "localhost",
         "password": "none",
-        "port": 6379
+        "port": 7006
       }
     },
     "quotegenerator" : {

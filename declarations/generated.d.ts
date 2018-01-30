@@ -651,6 +651,7 @@ export class RedisBook extends LiveOrderbook implements Orderbook {
 
 export function getClient(): any;
 export function getRedisct(): any;
+export function getPubSubClient(): any;
 export function getEmitter(): any;
 
 /***************************************************************************************************************************
