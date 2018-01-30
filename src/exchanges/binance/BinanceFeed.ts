@@ -43,6 +43,9 @@ export class BinanceFeed extends ExchangeFeed {
     readonly owner: string;
     readonly feedUrl: string;
     protected lastHeartBeat: number = -1;
+    private totalMessageCount: { [product:string] : number } = {}
+    private lastMessageTime: { [product:string] : number } = {}
+    private totalMessageInterval: { [product:string] : number } = {}
     private counters: { [product: string]: number } = {};
     private sequences : { [product: string]: number } = {};
     protected initialMessagesQueue: { [product: string]: BinanceMessage[] } = {};
@@ -78,6 +81,9 @@ export class BinanceFeed extends ExchangeFeed {
             for(let product of products) {
                 index++;
                 this.counters[product] = -1;
+                this.totalMessageInterval[product] = 0;
+                this.totalMessageCount[product] = 0;
+                this.lastMessageTime[product] = 0;
                 this.initialMessagesQueue[product] = [];
                 if(index % 5 === 0) {
                     await new Promise((resolve)=> setTimeout(resolve, 10000));
@@ -94,8 +100,35 @@ export class BinanceFeed extends ExchangeFeed {
                 console.log('Subscribe completed @ ', new Date())
                 console.log('=========================================================================');
             }
-            return;
         }
+        console.log('=============================================');
+        console.log('Setting up heart beat checker ');
+        console.log('=============================================');
+        setInterval(()=> {
+            var now = Date.now();
+            console.log('Verifying socket status ', now);
+            Object.keys(this.lastMessageTime).forEach((product)=> {
+                var lastReceived = this.lastMessageTime[product];
+                var elapsed = now - lastReceived;
+                var count = this.totalMessageCount[product];
+                var averageTimeTaken = this.totalMessageInterval[product] / count ;
+                console.log('Product : ', product)
+                console.log('Elapsed : ', elapsed / 1000 , 'secs')
+                console.log('Average time taken : ', averageTimeTaken / 1000, ' secs ')
+                console.log('Total Mesages  : ', count)
+                if((elapsed) > (1000 * 60 * 2)) {
+                    console.warn(product, ' Elapsed time greater than 2 minutes', elapsed / 1000);
+                    console.warn(product ,' Average time taken for messages in secs', averageTimeTaken / 1000);
+                    let fiftyTimesAverage = (50 * averageTimeTaken);
+                    let maxTime = 1000 * 60 * 5
+                    let availableTime = fiftyTimesAverage > 50000 ?  maxTime : fiftyTimesAverage;
+                    if(elapsed > fiftyTimesAverage ) {
+                        console.error(product ,' Resubscribing ',elapsed, averageTimeTaken);
+                        this.subscribeProduct(product);
+                    }
+                }
+            })
+        }, 1000 * 60 * 2)
     }
 
     async subscribeProduct(product:string) {
@@ -110,10 +143,22 @@ export class BinanceFeed extends ExchangeFeed {
                 (oldDepthSocket as any).active = false;
                 oldDepthSocket.close()
             }
+            this.totalMessageInterval[product] = 0;
+            this.totalMessageCount[product] = 0;
+            this.lastMessageTime[product] = 0;
             var depthUrl = this.getWebsocketUrlForProduct(product);
             console.log('connecting to ',this.getWebsocketUrlForProduct(product))
             const depthSocket = new hooks.WebSocket(depthUrl);
             depthSocket.on('message', (msg: any) => {
+                this.totalMessageCount[product] = this.totalMessageCount[product] + 1;
+                if(this.lastMessageTime[product] === 0) {
+                    this.lastMessageTime[product] = Date.now();
+                } else {
+                    var now = Date.now();
+                    var interval = now - this.lastMessageTime[product];
+                    this.lastMessageTime[product] = now;
+                    this.totalMessageInterval[product] = this.totalMessageInterval[product] + interval;
+                }
                 this.handleDepthMessages(msg, product)
             });
             depthSocket.on('close', (data:any)=> {
