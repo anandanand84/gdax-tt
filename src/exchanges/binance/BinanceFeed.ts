@@ -45,6 +45,7 @@ export class BinanceFeed extends ExchangeFeed {
     protected lastHeartBeat: number = -1;
     private totalMessageCount: { [product:string] : number } = {}
     private lastMessageTime: { [product:string] : number } = {}
+    private lastTradeTime: { [product:string] : number } = {}
     private totalMessageInterval: { [product:string] : number } = {}
     private counters: { [product: string]: number } = {};
     private sequences : { [product: string]: number } = {};
@@ -102,33 +103,45 @@ export class BinanceFeed extends ExchangeFeed {
             }
         }
         console.log('=============================================');
-        console.log('Setting up heart beat checker ');
+        console.log('Setting up heart beat checker for depth and trade');
         console.log('=============================================');
         setInterval(()=> {
             var now = Date.now();
-            console.log('Verifying socket status ', now);
+            console.log('Verifying depth and trade socket status  ', now);
             Object.keys(this.lastMessageTime).forEach((product)=> {
+                var failed = false;
                 var lastReceived = this.lastMessageTime[product];
+                var lastTraded = this.lastTradeTime[product];
                 var elapsed = now - lastReceived;
+                var tradeElapsed = now - lastTraded;
                 var count = this.totalMessageCount[product];
                 var averageTimeTaken = this.totalMessageInterval[product] / count ;
                 console.log('Product : ', product)
                 console.log('Elapsed : ', elapsed / 1000 , 'secs')
                 console.log('Average time taken : ', averageTimeTaken / 1000, ' secs ')
                 console.log('Total Mesages  : ', count)
-                if((elapsed) > (1000 * 60 * 2)) {
-                    console.warn(product, ' Elapsed time greater than 2 minutes', elapsed / 1000);
+                if(tradeElapsed > (1000 * 60 * 1)) {
+                    console.warn(product, 'Trade Elapsed time greater than 1 minutes', elapsed / 1000);
+                    if(tradeElapsed > (50 * averageTimeTaken)) {
+                        failed = true;
+                    }
+                }
+                if((elapsed) > (1000 * 60 * 1)) {
+                    console.warn(product, ' Elapsed time greater than 1 minutes', elapsed / 1000);
                     console.warn(product ,' Average time taken for messages in secs', averageTimeTaken / 1000);
                     let fiftyTimesAverage = (50 * averageTimeTaken);
                     let maxTime = 1000 * 60 * 5
                     let availableTime = fiftyTimesAverage > 50000 ?  maxTime : fiftyTimesAverage;
                     if(elapsed > fiftyTimesAverage ) {
                         console.error(product ,' Resubscribing ',elapsed, averageTimeTaken);
-                        this.subscribeProduct(product);
+                        failed = true;
                     }
                 }
+                if(failed) {
+                    this.subscribeProduct(product);
+                }
             })
-        }, 1000 * 60 * 2)
+        }, 1000 * 60 * 0.4)
     }
 
     async subscribeProduct(product:string) {
@@ -146,6 +159,7 @@ export class BinanceFeed extends ExchangeFeed {
             this.totalMessageInterval[product] = 0;
             this.totalMessageCount[product] = 0;
             this.lastMessageTime[product] = 0;
+            this.lastTradeTime[product] = 0;
             var depthUrl = this.getWebsocketUrlForProduct(product);
             console.log('connecting to ',this.getWebsocketUrlForProduct(product))
             const depthSocket = new hooks.WebSocket(depthUrl);
@@ -180,6 +194,7 @@ export class BinanceFeed extends ExchangeFeed {
             const tradesocket = new hooks.WebSocket(BINANCE_WS_FEED+product.toLowerCase()+'@trade');
             console.log('connecting to ', BINANCE_WS_FEED+product.toLowerCase()+'@trade')
             tradesocket.on('message', (msg: any) => {
+                this.lastTradeTime[product] = Date.now();
                 this.handleTradeMessages(msg, product)
             });
             tradesocket.on('close', (data:any)=> {

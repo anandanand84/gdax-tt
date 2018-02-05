@@ -10,6 +10,7 @@ export declare class BinanceFeed extends ExchangeFeed {
     protected lastHeartBeat: number;
     private totalMessageCount;
     private lastMessageTime;
+    private lastTradeTime;
     private totalMessageInterval;
     private counters;
     private sequences;
