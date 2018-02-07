@@ -40,6 +40,7 @@ interface MessageCounter {
 
 var startingTime = Date.now();
 
+var index = 0;
 var underBan = false;
 var lastBanRef:any;
 var banUntilTime = 0;
@@ -115,21 +116,16 @@ export class BinanceFeed extends ExchangeFeed {
             return;
         }
         this.isConnecting = true;
-        var index = 0;
         setTimeout(()=> {
             this.emit('websocket-connection');
         },3000)
         if(this.multiSocket && products && products.length > 0) {
             for(let product of products) {
-                index++;
                 this.counters[product] = -1;
                 this.totalMessageInterval[product] = 0;
                 this.totalMessageCount[product] = 0;
                 this.lastMessageTime[product] = 0;
                 this.initialMessagesQueue[product] = [];
-                if(index % 3 === 0) {
-                    await new Promise((resolve)=> setTimeout(resolve, 15000));
-                }
                 await this.subscribeProduct(product);
             }
             this.retryErroredProducts();
@@ -190,6 +186,10 @@ export class BinanceFeed extends ExchangeFeed {
             if(underBan) {
                 console.warn('Under ban not subscribing product', product)
                 return;
+            }
+            index++;
+            if(index % 3 === 0) {
+                await new Promise((resolve)=> setTimeout(resolve, 15000));
             }
             var oldTradeSocket:WebSocket = this.tradesockets[product];
             var oldDepthSocket:WebSocket = this.depthsockets[product];
