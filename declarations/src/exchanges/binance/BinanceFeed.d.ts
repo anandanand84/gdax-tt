@@ -27,6 +27,7 @@ export declare class BinanceFeed extends ExchangeFeed {
     private erroredProducts;
     constructor(config: GI.BinanceFeedConfig);
     protected getWebsocketUrlForProduct(product: string): string;
+    retryErroredProducts(): void;
     protected connect(products?: string[]): Promise<void>;
     subscribeProduct(product: string): Promise<void>;
     protected handleMessage(): void;

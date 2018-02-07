@@ -23,6 +23,7 @@ import WebSocket = require('ws');
 import * as request from 'request-promise';
 import * as GI from './BinanceInterfaces';
 import { BinanceMessage, BinanceSnapshotMessage, BinanceTradeMessage, BinanceDepthMessage } from './BinanceInterfaces';
+import { setTimeout, clearInterval } from 'timers';
 
 export const BINANCE_WS_FEED = `wss://stream.binance.com:9443/ws/`;
 
@@ -38,6 +39,30 @@ interface MessageCounter {
 
 
 var startingTime = Date.now();
+
+var underBan = false;
+var lastBanRef:any;
+var banUntilTime = 0;
+
+var getBanTime = function(str:string) {
+    const regex = /IP banned until (\d*)./g;
+    let m;
+    var time = 0;
+    while ((m = regex.exec(str)) !== null) {
+        // This is necessary to avoid infinite loops with zero-width matches
+        if (m.index === regex.lastIndex) {
+            regex.lastIndex++;
+        }
+        
+        // The result can be accessed through the `m`-variable.
+        m.forEach((match, groupIndex) => {
+            time = parseInt(match);
+            banUntilTime = time;
+        });
+    }
+    return time;
+}
+
 
 var retryCount = process.env.RETRY_COUNT || 1;
 
@@ -69,6 +94,20 @@ export class BinanceFeed extends ExchangeFeed {
         return BINANCE_WS_FEED+product.toLowerCase()+'@depth';
     }
 
+    retryErroredProducts() {
+        console.log(' Total Errored products ', this.erroredProducts.size);
+        if(this.erroredProducts.size > 0) {
+            Array.from(this.erroredProducts).forEach(this.subscribeProduct.bind(this));
+            console.log('=========================================================================');
+            console.log('could not subscribe following products ', Array.from(this.erroredProducts))    
+            console.log('=========================================================================');
+        } else {
+            console.log('=========================================================================');
+            console.log('All products subscribed');
+            console.log('Subscribe completed @ ', new Date())
+            console.log('=========================================================================');
+        }
+    }
     protected async connect(products?:string[]) {
         console.log('Is multi sockets : ',this.multiSocket)
         console.log('Products list : ',products)
@@ -89,20 +128,11 @@ export class BinanceFeed extends ExchangeFeed {
                 this.lastMessageTime[product] = 0;
                 this.initialMessagesQueue[product] = [];
                 if(index % 3 === 0) {
-                    await new Promise((resolve)=> setTimeout(resolve, 12000));
+                    await new Promise((resolve)=> setTimeout(resolve, 15000));
                 }
                 await this.subscribeProduct(product);
             }
-            if(this.erroredProducts.size > 0) {
-                console.log('=========================================================================');
-                console.log('could not subscribe following products ', Array.from(this.erroredProducts))    
-                console.log('=========================================================================');
-            } else {
-                console.log('=========================================================================');
-                console.log('All products subscribed');
-                console.log('Subscribe completed @ ', new Date())
-                console.log('=========================================================================');
-            }
+            this.retryErroredProducts();
             startingTime = Date.now();
         }
         console.log('=============================================');
@@ -157,6 +187,10 @@ export class BinanceFeed extends ExchangeFeed {
 
     async subscribeProduct(product:string) {
         try {
+            if(underBan) {
+                console.warn('Under ban not subscribing product', product)
+                return;
+            }
             var oldTradeSocket:WebSocket = this.tradesockets[product];
             var oldDepthSocket:WebSocket = this.depthsockets[product];
             if(oldTradeSocket) {
@@ -229,6 +263,17 @@ export class BinanceFeed extends ExchangeFeed {
             request(`https://www.binance.com/api/v1/depth?symbol=${product.toUpperCase()}&limit=1000`, { json : true }).then((depthSnapshot) => {
                 this.handleSnapshotMessage(depthSnapshot, product);
             }).catch((err)=> {
+                if(err.statusCode == 418) {
+                    underBan = true;
+                    var currentTime = Date.now();
+                    var ban = getBanTime(err.message);
+                    console.log('Removing ban @ ', ban, ' after ', (ban -  currentTime)/ 1000 , 'secs');
+                    clearTimeout(lastBanRef);
+                    lastBanRef = setTimeout(()=> {
+                        underBan = false;
+                        this.retryErroredProducts();
+                    }, (ban - currentTime))
+                }
                 this.erroredProducts.add(product)
                 console.error(err);
             })
