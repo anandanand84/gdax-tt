@@ -37,6 +37,8 @@ interface MessageCounter {
 }
 
 
+var startingTime = Date.now();
+
 var retryCount = process.env.RETRY_COUNT || 1;
 
 export class BinanceFeed extends ExchangeFeed {
@@ -86,8 +88,8 @@ export class BinanceFeed extends ExchangeFeed {
                 this.totalMessageCount[product] = 0;
                 this.lastMessageTime[product] = 0;
                 this.initialMessagesQueue[product] = [];
-                if(index % 5 === 0) {
-                    await new Promise((resolve)=> setTimeout(resolve, 10000));
+                if(index % 3 === 0) {
+                    await new Promise((resolve)=> setTimeout(resolve, 12000));
                 }
                 await this.subscribeProduct(product);
             }
@@ -101,12 +103,17 @@ export class BinanceFeed extends ExchangeFeed {
                 console.log('Subscribe completed @ ', new Date())
                 console.log('=========================================================================');
             }
+            startingTime = Date.now();
         }
         console.log('=============================================');
         console.log('Setting up heart beat checker for depth and trade');
         console.log('=============================================');
         setInterval(()=> {
             var now = Date.now();
+            if (((now - startingTime) / 1000) < (3 * 60)) {
+                console.info('Just started @ waiting for few minutes to generate averages... ')
+                return;
+            };
             console.log('Verifying depth and trade socket status  ', now);
             Object.keys(this.lastMessageTime).forEach((product)=> {
                 var failed = false;
@@ -157,7 +164,7 @@ export class BinanceFeed extends ExchangeFeed {
                 oldDepthSocket.close()
             }
             this.totalMessageInterval[product] = 0;
-            this.totalMessageCount[product] = 0;
+            this.totalMessageCount[product] = 1;
             this.lastMessageTime[product] = 0;
             this.lastTradeTime[product] = 0;
             var depthUrl = this.getWebsocketUrlForProduct(product);
