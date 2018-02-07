@@ -1,3 +1,4 @@
+/// <reference types="bignumber.js" />
 /***************************************************************************************************************************
  * @license                                                                                                                *
  * Copyright 2017 Coinbase, Inc.                                                                                           *
@@ -27,8 +28,8 @@ export default class BigArray {
     constructor(arr: Biglike[]);
     equals(b: BigArray): boolean;
     readonly length: number;
-    sumTo(i: number): any;
-    sum(): any;
+    sumTo(i: number): BigNumber.BigNumber;
+    sum(): BigNumber.BigNumber;
     cumsum(): BigArray;
     inv(): BigArray;
     mult(B: BigArray | Biglike): BigArray;

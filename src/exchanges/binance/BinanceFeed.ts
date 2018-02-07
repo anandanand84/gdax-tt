@@ -123,6 +123,10 @@ export class BinanceFeed extends ExchangeFeed {
                 var tradeElapsed = now - lastTraded;
                 var count = this.totalMessageCount[product];
                 var averageTimeTaken = this.totalMessageInterval[product] / count ;
+                if(count < 1000) {
+                    console.info('Ignoring product with less updates ',product, count);
+                    return;
+                };
                 console.log('Product : ', product)
                 console.log('Elapsed : ', elapsed / 1000 , 'secs')
                 console.log('Average time taken : ', averageTimeTaken / 1000, ' secs ')
