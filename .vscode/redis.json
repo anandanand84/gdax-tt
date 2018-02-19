@@ -1,0 +1,12 @@
+{
+    "databases": [
+        {
+            "name": "local",
+            "url": "redis://localhost:6379"
+        },
+        {
+            "name": "Redis Databse (indicators)",
+            "url": "redis://pub-redis-13345.ap-southeast-1-1.1.ec2.garantiadata.com:13345"
+        }
+    ]
+}
