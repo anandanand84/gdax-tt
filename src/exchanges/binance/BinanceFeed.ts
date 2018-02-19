@@ -208,6 +208,7 @@ export class BinanceFeed extends ExchangeFeed {
             var depthUrl = this.getWebsocketUrlForProduct(product);
             console.log('connecting to ',this.getWebsocketUrlForProduct(product))
             const depthSocket = new hooks.WebSocket(depthUrl);
+            (depthSocket as any).active = true;
             depthSocket.on('message', (msg: any) => {
                 this.totalMessageCount[product] = this.totalMessageCount[product] + 1;
                 if(this.lastMessageTime[product] === 0) {
@@ -237,7 +238,8 @@ export class BinanceFeed extends ExchangeFeed {
                 }
             });
             const tradesocket = new hooks.WebSocket(BINANCE_WS_FEED+product.toLowerCase()+'@trade');
-            console.log('connecting to ', BINANCE_WS_FEED+product.toLowerCase()+'@trade')
+            console.log('connecting to ', BINANCE_WS_FEED+product.toLowerCase()+'@trade');
+            (tradesocket as any).active = true;
             tradesocket.on('message', (msg: any) => {
                 this.lastTradeTime[product] = Date.now();
                 this.handleTradeMessages(msg, product)
