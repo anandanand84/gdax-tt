@@ -132,7 +132,7 @@ export class BinanceFeed extends ExchangeFeed {
             startingTime = Date.now();
         }
         console.log('=============================================');
-        console.log('Setting up heart beat checker for depth and trade');
+        console.log('Setting up heart beat checker for depth and trade every 0.4 minutes');
         console.log('=============================================');
         setInterval(()=> {
             var now = Date.now();

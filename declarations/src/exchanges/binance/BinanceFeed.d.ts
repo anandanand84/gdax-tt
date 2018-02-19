@@ -3,7 +3,7 @@ import { ExchangeFeed } from '../ExchangeFeed';
 import WebSocket = require('ws');
 import * as GI from './BinanceInterfaces';
 import { BinanceMessage, BinanceSnapshotMessage, BinanceDepthMessage } from './BinanceInterfaces';
-export declare const BINANCE_WS_FEED: string;
+export declare const BINANCE_WS_FEED = "wss://stream.binance.com:9443/ws/";
 export declare class BinanceFeed extends ExchangeFeed {
     readonly owner: string;
     readonly feedUrl: string;
