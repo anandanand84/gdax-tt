@@ -136,7 +136,7 @@ export class BinanceFeed extends ExchangeFeed {
         console.log('=============================================');
         setInterval(()=> {
             var now = Date.now();
-            if (((now - startingTime) / 1000) < (3 * 60)) {
+            if (((now - startingTime) / 1000) < (5 * 60)) {
                 console.info('Just started @ waiting for few minutes to generate averages... ')
                 return;
             };
@@ -149,10 +149,6 @@ export class BinanceFeed extends ExchangeFeed {
                 var tradeElapsed = now - lastTraded;
                 var count = this.totalMessageCount[product];
                 var averageTimeTaken = this.totalMessageInterval[product] / count ;
-                if(count < 250) {
-                    console.info('Ignoring product with less updates ',product, count);
-                    return;
-                };
                 console.log('Product : ', product)
                 console.log('Elapsed : ', elapsed / 1000 , 'secs')
                 console.log('Average time taken : ', averageTimeTaken / 1000, ' secs ')
