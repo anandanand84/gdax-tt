@@ -8,10 +8,8 @@ export declare class BinanceFeed extends ExchangeFeed {
     readonly owner: string;
     readonly feedUrl: string;
     protected lastHeartBeat: number;
-    private totalMessageCount;
     private lastMessageTime;
     private lastTradeTime;
-    private totalMessageInterval;
     private counters;
     private sequences;
     protected initialMessagesQueue: {

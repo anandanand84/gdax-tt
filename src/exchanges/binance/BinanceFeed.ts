@@ -71,10 +71,8 @@ export class BinanceFeed extends ExchangeFeed {
     readonly owner: string;
     readonly feedUrl: string;
     protected lastHeartBeat: number = -1;
-    private totalMessageCount: { [product:string] : number } = {}
     private lastMessageTime: { [product:string] : number } = {}
     private lastTradeTime: { [product:string] : number } = {}
-    private totalMessageInterval: { [product:string] : number } = {}
     private counters: { [product: string]: number } = {};
     private sequences : { [product: string]: number } = {};
     protected initialMessagesQueue: { [product: string]: BinanceMessage[] } = {};
@@ -122,8 +120,6 @@ export class BinanceFeed extends ExchangeFeed {
         if(this.multiSocket && products && products.length > 0) {
             for(let product of products) {
                 this.counters[product] = -1;
-                this.totalMessageInterval[product] = 0;
-                this.totalMessageCount[product] = 0;
                 this.lastMessageTime[product] = 0;
                 this.initialMessagesQueue[product] = [];
                 await this.subscribeProduct(product);
@@ -136,48 +132,32 @@ export class BinanceFeed extends ExchangeFeed {
         console.log('=============================================');
         setInterval(()=> {
             var now = Date.now();
-            if (((now - startingTime) / 1000) < (3 * 60)) {
-                console.info('Just started @ waiting for 0.5 minutes to generate averages... ')
-                return;
-            };
-            console.log('Verifying depth and trade socket status  ', now);
+            console.log('Verifying depth and trade socket status and testing ping  ', now);
             Object.keys(this.lastMessageTime).forEach((product)=> {
+                var failed = false;
                 var tradeSocket:WebSocket = this.tradesockets[product];
                 var depthSocket:WebSocket = this.depthsockets[product];
-                var failed = false;
+                tradeSocket.ping(now);
+                depthSocket.ping(now);
+                var tradePong = (tradeSocket as any).lastPongTime;
+                var depthPong = (depthSocket as any).lastPongTime;
+                var tradePonged = tradePong > ( now - (60 * 1000))
+                var depthPonged = depthPong > ( now - (60 * 1000))
                 var lastReceived = this.lastMessageTime[product];
                 var lastTraded = this.lastTradeTime[product];
                 var elapsed = now - lastReceived;
                 var tradeElapsed = now - lastTraded;
-                var count = this.totalMessageCount[product];
-                var averageTimeTaken = this.totalMessageInterval[product] / count ;
-                console.log('Product : ', product)
-                console.log('Elapsed : ', elapsed / 1000 , 'secs')
-                console.log('Average time taken : ', averageTimeTaken / 1000, ' secs ')
-                console.log('Total Mesages  : ', count)
-                if((tradeSocket.readyState > 1) || (depthSocket.readyState > 1)) {
+                console.log('Product                    : ', product)
+                console.log('Last pong times            : ', tradePong, depthPong )
+                console.log('Last trade & depth times   : ', lastTraded, lastReceived )
+                console.log('Elapsed                    : ', elapsed / 1000 , 'secs')
+                console.log('Trade Elapsed              : ', tradeElapsed / 1000 , 'secs')
+                if((!tradePonged) || (!depthPonged) || (tradeSocket.readyState > 1) || (depthSocket.readyState > 1) || tradeElapsed > (1000 * 60 * 10) || (elapsed) > (1000 * 60 * 5)) {
                     failed = true;
-                    console.log('Socket not in ready status , ', product)
-                }
-                if(tradeElapsed > (1000 * 60 * 5)) {
-                    if(tradeElapsed > (50 * averageTimeTaken)) {
-                        console.warn(product, 'Trade Elapsed time greater than 2 minutes and more than 50 times average Elapsed Time ', elapsed / 1000, 'Average ', averageTimeTaken);
-                        failed = true;
-                    }
-                }
-                if((elapsed) > (1000 * 60 * 5)) {
-                    console.warn(product, ' Elapsed time greater than 1 minutes', elapsed / 1000);
-                    console.warn(product ,' Average time taken for messages in secs', averageTimeTaken / 1000);
-                    let fiftyTimesAverage = (50 * averageTimeTaken);
-                    let maxTime = 1000 * 60 * 5
-                    let availableTime = fiftyTimesAverage > 50000 ?  maxTime : fiftyTimesAverage;
-                    if(elapsed > fiftyTimesAverage ) {
-                        console.error(product ,' Resubscribing ',elapsed, averageTimeTaken);
-                        failed = true;
-                    }
-                }
-                if(failed) {
+                    console.log('Socket not working for product ', product)
                     this.subscribeProduct(product);
+                } else {
+                    console.log('Socket good for product ', product)
                 }
             })
         }, 1000 * 60 * 0.4)
@@ -193,6 +173,7 @@ export class BinanceFeed extends ExchangeFeed {
             if(index % 3 === 0) {
                 await new Promise((resolve)=> setTimeout(resolve, 15000));
             }
+            var initialTime = Date.now();
             var oldTradeSocket:WebSocket = this.tradesockets[product];
             var oldDepthSocket:WebSocket = this.depthsockets[product];
             if(oldTradeSocket) {
@@ -203,24 +184,14 @@ export class BinanceFeed extends ExchangeFeed {
                 (oldDepthSocket as any).active = false;
                 oldDepthSocket.close()
             }
-            this.totalMessageInterval[product] = 0;
-            this.totalMessageCount[product] = 1;
-            this.lastMessageTime[product] = 0;
-            this.lastTradeTime[product] = 0;
+            this.lastMessageTime[product] = initialTime;
+            this.lastTradeTime[product] = initialTime;
             var depthUrl = this.getWebsocketUrlForProduct(product);
             console.log('connecting to ',this.getWebsocketUrlForProduct(product))
             const depthSocket = new hooks.WebSocket(depthUrl);
             (depthSocket as any).active = true;
             depthSocket.on('message', (msg: any) => {
-                this.totalMessageCount[product] = this.totalMessageCount[product] + 1;
-                if(this.lastMessageTime[product] === 0) {
-                    this.lastMessageTime[product] = Date.now();
-                } else {
-                    var now = Date.now();
-                    var interval = now - this.lastMessageTime[product];
-                    this.lastMessageTime[product] = now;
-                    this.totalMessageInterval[product] = this.totalMessageInterval[product] + interval;
-                }
+                this.lastMessageTime[product] = Date.now();
                 this.handleDepthMessages(msg, product)
             });
             depthSocket.on('close', (data:any)=> {
@@ -239,6 +210,9 @@ export class BinanceFeed extends ExchangeFeed {
                     console.log('Inactive Depth socket errored ignoring',product,  data)
                 }
             });
+            depthSocket.on('pong', (data:any)=> {
+                (depthSocket as any).lastPongTime = parseInt(data.toString())
+            })
             const tradesocket = new hooks.WebSocket(BINANCE_WS_FEED+product.toLowerCase()+'@trade');
             console.log('connecting to ', BINANCE_WS_FEED+product.toLowerCase()+'@trade');
             (tradesocket as any).active = true;
@@ -262,8 +236,14 @@ export class BinanceFeed extends ExchangeFeed {
                     console.log('Inactive Trade socket errored ignoring',product,  data)
                 }
             });
+            tradesocket.on('pong', (data:any)=> {
+                (tradesocket as any).lastPongTime = parseInt(data.toString());
+            })
             this.tradesockets[product] = tradesocket;
             this.depthsockets[product] = depthSocket;
+            (depthSocket as any).lastPongTime = initialTime;
+            (tradesocket as any).lastPongTime = initialTime;
+
             request(`https://www.binance.com/api/v1/depth?symbol=${product.toUpperCase()}&limit=1000`, { json : true }).then((depthSnapshot) => {
                 this.handleSnapshotMessage(depthSnapshot, product);
             }).catch((err)=> {
