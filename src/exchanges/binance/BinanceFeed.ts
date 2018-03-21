@@ -80,7 +80,7 @@ export class BinanceFeed extends ExchangeFeed {
     protected initialMessagesQueue: { [product: string]: BinanceMessage[] } = {};
     protected depthsockets:  { [product: string]: WebSocket } = {};
     protected tradesockets:  { [product: string]: WebSocket } = {};
-    private MAX_QUEUE_LENGTH: number = 1000;
+    private MAX_QUEUE_LENGTH: number = 5000;
     private erroredProducts: Set<string> = new Set<string>();
 
     constructor(config: GI.BinanceFeedConfig) {
@@ -136,12 +136,14 @@ export class BinanceFeed extends ExchangeFeed {
         console.log('=============================================');
         setInterval(()=> {
             var now = Date.now();
-            if (((now - startingTime) / 1000) < (5 * 60)) {
-                console.info('Just started @ waiting for few minutes to generate averages... ')
+            if (((now - startingTime) / 1000) < (3 * 60)) {
+                console.info('Just started @ waiting for 0.5 minutes to generate averages... ')
                 return;
             };
             console.log('Verifying depth and trade socket status  ', now);
             Object.keys(this.lastMessageTime).forEach((product)=> {
+                var tradeSocket:WebSocket = this.tradesockets[product];
+                var depthSocket:WebSocket = this.depthsockets[product];
                 var failed = false;
                 var lastReceived = this.lastMessageTime[product];
                 var lastTraded = this.lastTradeTime[product];
@@ -153,13 +155,17 @@ export class BinanceFeed extends ExchangeFeed {
                 console.log('Elapsed : ', elapsed / 1000 , 'secs')
                 console.log('Average time taken : ', averageTimeTaken / 1000, ' secs ')
                 console.log('Total Mesages  : ', count)
-                if(tradeElapsed > (1000 * 60 * 1)) {
-                    console.warn(product, 'Trade Elapsed time greater than 1 minutes', elapsed / 1000);
+                if((tradeSocket.readyState > 1) || (depthSocket.readyState > 1)) {
+                    failed = true;
+                    console.log('Socket not in ready status , ', product)
+                }
+                if(tradeElapsed > (1000 * 60 * 5)) {
                     if(tradeElapsed > (50 * averageTimeTaken)) {
+                        console.warn(product, 'Trade Elapsed time greater than 2 minutes and more than 50 times average Elapsed Time ', elapsed / 1000, 'Average ', averageTimeTaken);
                         failed = true;
                     }
                 }
-                if((elapsed) > (1000 * 60 * 1)) {
+                if((elapsed) > (1000 * 60 * 5)) {
                     console.warn(product, ' Elapsed time greater than 1 minutes', elapsed / 1000);
                     console.warn(product ,' Average time taken for messages in secs', averageTimeTaken / 1000);
                     let fiftyTimesAverage = (50 * averageTimeTaken);
@@ -271,6 +277,14 @@ export class BinanceFeed extends ExchangeFeed {
                         underBan = false;
                         this.retryErroredProducts();
                     }, (ban - currentTime))
+                }else if (err.statusCode == 429) {
+                    underBan = true;
+                    clearTimeout(lastBanRef);
+                    lastBanRef = setTimeout(()=> {
+                        underBan = false;
+                        console.log('Retry after 50 secs')
+                        this.retryErroredProducts();
+                    }, (30 * 1000))
                 }
                 this.erroredProducts.add(product)
                 console.error(err);
