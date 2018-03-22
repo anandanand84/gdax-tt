@@ -138,14 +138,14 @@ export class BinanceFeed extends ExchangeFeed {
                     var failed = false;
                     var tradeSocket:WebSocket = this.tradesockets[product];
                     var depthSocket:WebSocket = this.depthsockets[product];
-                    if((tradeSocket.readyState > 0) && (depthSocket.readyState > 1)) {
+                    if((tradeSocket.readyState > 0) && (depthSocket.readyState > 0)) {
                         tradeSocket.ping(now);
                         depthSocket.ping(now);
                     }
                     var tradePong = (tradeSocket as any).lastPongTime;
                     var depthPong = (depthSocket as any).lastPongTime;
-                    var tradePonged = tradePong > ( now - (2 * 60 * 1000))
-                    var depthPonged = depthPong > ( now - (2 * 60 * 1000))
+                    var tradePonged = tradePong > ( now - (3 * 60 * 1000))
+                    var depthPonged = depthPong > ( now - (3 * 60 * 1000))
                     var lastReceived = this.lastMessageTime[product];
                     var lastTraded = this.lastTradeTime[product];
                     var elapsed = now - lastReceived;
@@ -219,6 +219,9 @@ export class BinanceFeed extends ExchangeFeed {
             depthSocket.on('pong', (data:any)=> {
                 (depthSocket as any).lastPongTime = parseInt(data.toString())
             })
+            depthSocket.on('open', ()=> {
+                depthSocket.ping(Date.now());
+            })
             const tradesocket = new hooks.WebSocket(BINANCE_WS_FEED+product.toLowerCase()+'@trade');
             console.log('connecting to ', BINANCE_WS_FEED+product.toLowerCase()+'@trade');
             (tradesocket as any).active = true;
@@ -244,6 +247,9 @@ export class BinanceFeed extends ExchangeFeed {
             });
             tradesocket.on('pong', (data:any)=> {
                 (tradesocket as any).lastPongTime = parseInt(data.toString());
+            })
+            tradesocket.on('open', ()=> {
+                tradesocket.ping(Date.now());
             })
             this.tradesockets[product] = tradesocket;
             this.depthsockets[product] = depthSocket;
