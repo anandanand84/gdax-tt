@@ -128,45 +128,56 @@ export class BinanceFeed extends ExchangeFeed {
             startingTime = Date.now();
         }
         console.log('=============================================');
-        console.log('Setting up heart beat checker for depth and trade every 0.4 minutes');
+        console.log('Setting up heart beat checker for depth and trade every 0.4 minutes after 0.1 min');
         console.log('=============================================');
-        setInterval(()=> {
-            var now = Date.now();
-            console.log('Verifying depth and trade socket status and testing ping  ', now);
+        setTimeout(() => {
             Object.keys(this.lastMessageTime).forEach((product)=> {
-                try {
-                    var failed = false;
-                    var tradeSocket:WebSocket = this.tradesockets[product];
-                    var depthSocket:WebSocket = this.depthsockets[product];
-                    if((tradeSocket.readyState > 0) && (depthSocket.readyState > 0)) {
-                        tradeSocket.ping(now);
-                        depthSocket.ping(now);
-                    }
-                    var tradePong = (tradeSocket as any).lastPongTime;
-                    var depthPong = (depthSocket as any).lastPongTime;
-                    var tradePonged = tradePong > ( now - (3 * 60 * 1000))
-                    var depthPonged = depthPong > ( now - (3 * 60 * 1000))
-                    var lastReceived = this.lastMessageTime[product];
-                    var lastTraded = this.lastTradeTime[product];
-                    var elapsed = now - lastReceived;
-                    var tradeElapsed = now - lastTraded;
-                    console.log('Product                    : ', product)
-                    console.log('Last pong times            : ', tradePong, depthPong )
-                    console.log('Last trade & depth times   : ', lastTraded, lastReceived )
-                    console.log('Elapsed                    : ', elapsed / 1000 , 'secs')
-                    console.log('Trade Elapsed              : ', tradeElapsed / 1000 , 'secs')
-                    if((!tradePonged) || (!depthPonged) || (tradeSocket.readyState > 1) || (depthSocket.readyState > 1) || tradeElapsed > (1000 * 60 * 10) || (elapsed) > (1000 * 60 * 5)) {
-                        console.log((!tradePonged) , (!depthPonged) , (tradeSocket.readyState > 1) , (depthSocket.readyState > 1) , tradeElapsed > (1000 * 60 * 10) , (elapsed) > (1000 * 60 * 5))
-                        failed = true;
-                        console.log('Socket not working for product ', product)
-                        this.subscribeProduct(product);
-                    } else {
-                        console.log('Socket good for product ', product)
-                    }
-                } catch(err) {
-                    console.error(err);
+                var now = Date.now();
+                var tradeSocket:WebSocket = this.tradesockets[product];
+                var depthSocket:WebSocket = this.depthsockets[product];
+                if((tradeSocket.readyState > 0) && (depthSocket.readyState > 0)) {
+                    tradeSocket.ping(now);
+                    depthSocket.ping(now);
                 }
             })
+            setInterval(()=> {
+                var now = Date.now();
+                console.log('Verifying depth and trade socket status and testing ping  ', now);
+                Object.keys(this.lastMessageTime).forEach((product)=> {
+                    try {
+                        var failed = false;
+                        var tradeSocket:WebSocket = this.tradesockets[product];
+                        var depthSocket:WebSocket = this.depthsockets[product];
+                        if((tradeSocket.readyState > 0) && (depthSocket.readyState > 0)) {
+                            tradeSocket.ping(now);
+                            depthSocket.ping(now);
+                        }
+                        var tradePong = (tradeSocket as any).lastPongTime;
+                        var depthPong = (depthSocket as any).lastPongTime;
+                        var tradePonged = tradePong > ( now - (3 * 60 * 1000))
+                        var depthPonged = depthPong > ( now - (3 * 60 * 1000))
+                        var lastReceived = this.lastMessageTime[product];
+                        var lastTraded = this.lastTradeTime[product];
+                        var elapsed = now - lastReceived;
+                        var tradeElapsed = now - lastTraded;
+                        if((!tradePonged) || (!depthPonged) || (tradeSocket.readyState > 1) || (depthSocket.readyState > 1) || tradeElapsed > (1000 * 60 * 10) || (elapsed) > (1000 * 60 * 5)) {
+                            console.log('Product                    : ', product)
+                            console.log('Last pong times            : ', tradePong, depthPong )
+                            console.log('Last trade & depth times   : ', lastTraded, lastReceived )
+                            console.log('Elapsed                    : ', elapsed / 1000 , 'secs')
+                            console.log('Trade Elapsed              : ', tradeElapsed / 1000 , 'secs')
+                            console.log((!tradePonged) , (!depthPonged) , (tradeSocket.readyState > 1) , (depthSocket.readyState > 1) , tradeElapsed > (1000 * 60 * 10) , (elapsed) > (1000 * 60 * 5))
+                            failed = true;
+                            console.log('Socket not working for product ', product)
+                            this.subscribeProduct(product);
+                        } else {
+                            console.log('Socket good for product ', product)
+                        }
+                    } catch(err) {
+                        console.error(err);
+                    }
+                })
+            }, 1000 * 60 * 0.6)
         }, 1000 * 60 * 4)
     }
 
