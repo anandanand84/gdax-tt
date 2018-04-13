@@ -156,6 +156,7 @@ export class BinanceFeed extends ExchangeFeed {
                     console.log('Elapsed                    : ', elapsed / 1000 , 'secs')
                     console.log('Trade Elapsed              : ', tradeElapsed / 1000 , 'secs')
                     if((!tradePonged) || (!depthPonged) || (tradeSocket.readyState > 1) || (depthSocket.readyState > 1) || tradeElapsed > (1000 * 60 * 10) || (elapsed) > (1000 * 60 * 5)) {
+                        console.log((!tradePonged) , (!depthPonged) , (tradeSocket.readyState > 1) , (depthSocket.readyState > 1) , tradeElapsed > (1000 * 60 * 10) , (elapsed) > (1000 * 60 * 5))
                         failed = true;
                         console.log('Socket not working for product ', product)
                         this.subscribeProduct(product);
@@ -166,7 +167,7 @@ export class BinanceFeed extends ExchangeFeed {
                     console.error(err);
                 }
             })
-        }, 1000 * 60 * 0.4)
+        }, 1000 * 60 * 4)
     }
 
     async subscribeProduct(product:string) {
