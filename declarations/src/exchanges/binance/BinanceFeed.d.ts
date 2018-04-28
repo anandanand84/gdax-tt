@@ -28,6 +28,7 @@ export declare class BinanceFeed extends ExchangeFeed {
     retryErroredProducts(): void;
     protected connect(products?: string[]): Promise<void>;
     subscribeProduct(product: string): Promise<void>;
+    private fetchSnapshotForProduct(product);
     protected handleMessage(): void;
     protected handleSnapshotMessage(msg: BinanceSnapshotMessage, productId?: string): void;
     protected handleTradeMessages(msg: string, productId?: string): void;

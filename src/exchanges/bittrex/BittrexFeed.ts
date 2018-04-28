@@ -195,8 +195,8 @@ export class BittrexFeed extends ExchangeFeed {
                 this.updateExchangeState(message.A as BittrexExchangeState[]);
                 break;
             case 'updateSummaryState':
-                const tickers: BittrexTicker[] = message.A[0].Deltas || [];
-                this.updateTickers(tickers);
+                // const tickers: BittrexTicker[] = message.A[0].Deltas || [];
+                // this.updateTickers(tickers);
                 break;
             default:
                 this.log('debug', `Unknown message type: ${message.M}`);
@@ -236,12 +236,12 @@ export class BittrexFeed extends ExchangeFeed {
                 const msg: LevelMessage = createUpdateMessage(genericProduct, 'sell', state.Nounce, delta);
                 this.push(msg);
             });
-            state.Fills.forEach((fill: BittrexFill) => {
+            state.Fills.forEach((fill: BittrexFill, index) => {
                 const message: TradeMessage = {
                     type: 'trade',
                     productId: genericProduct,
                     time: new Date(fill.TimeStamp),
-                    tradeId: '0',
+                    tradeId: state.Nounce+''+index, 
                     price: fill.Rate,
                     size: fill.Quantity,
                     side: fill.OrderType.toLowerCase()
