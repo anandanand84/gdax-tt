@@ -198,7 +198,7 @@ Depth Elapsed Failed            : ${(elapsed) > (1000 * 60 * 10)}
             index++;
             console.log(index);
             if(index % 3 === 0) {
-                await new Promise((resolve)=> setTimeout(resolve, 1500));
+                await new Promise((resolve)=> setTimeout(resolve, 10500));
             }
             var initialTime = Date.now();
             var oldTradeSocket:WebSocket = this.tradesockets[product];
