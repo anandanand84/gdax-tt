@@ -47,6 +47,12 @@ import { ExchangeAuthConfig } from '../AuthConfig';
 
 export const GDAX_WS_FEED = 'wss://ws-feed.gdax.com';
 
+const NO_BOOK:string = process.env.NO_BOOK;
+var noBook = false;
+if(NO_BOOK === 'true') {
+    noBook = true;
+}
+
 /**
  * Configuration interface for a GDAX websocket feed stream. `wsUrl` is used to override the default websocket URL.
  * Usually, you don't need this, but you may want to obtain a feed from the sandbox for testing, or an historical
@@ -83,10 +89,9 @@ export class GDAXFeed extends ExchangeFeed {
     constructor(config: GDAXFeedConfig) {
         super(config);
         this.products = new Set<string>();
-        this.channels = config.channels || ['level2', 'matches', 'ticker', 'user', 'heartbeat'];
-        if (!(this.channels as any).includes('heartbeat')) {
-            this.channels.push('heartbeat');
-        }
+        this.channels = ['matches', 'heartbeat'];
+        if(!noBook)
+            this.channels.push('level2');
         this.gdaxAPI = new GDAXExchangeAPI(config);
         this.connect();
     }

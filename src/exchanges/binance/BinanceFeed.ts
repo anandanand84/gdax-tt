@@ -160,7 +160,9 @@ export class BinanceFeed extends ExchangeFeed {
                         var lastTraded = this.lastTradeTime[product];
                         var elapsed = now - lastReceived;
                         var tradeElapsed = now - lastTraded;
-                        if((!tradePonged) || (!depthPonged) || (tradeSocket.readyState > 1) || (depthSocket.readyState > 1) || tradeElapsed > (1000 * 60 * 10) || (elapsed) > (1000 * 60 * 5)) {
+                        var fifteenMinutes = (1000 * 60 * 15);
+                        var fiveMinutes = (1000 * 60 * 5);
+                        if((!tradePonged) || (!depthPonged) || (tradeSocket.readyState > 1) || (depthSocket.readyState > 1) || tradeElapsed > fifteenMinutes || (elapsed) > fiveMinutes) {
                             console.log('Product                    : ', product)
                             console.log('Current Time               : ', new Date())
                             console.log('Trade Ponged               : ', new Date(tradePong))
@@ -174,8 +176,8 @@ Trade Ponged                    : ${(!tradePonged)}
 Depth Ponged                    : ${(!depthPonged)} 
 Trade Ready State               : ${(tradeSocket.readyState > 1)} 
 Depth Ready State               : ${(depthSocket.readyState > 1) } 
-Trade Elapsed Failed            : ${tradeElapsed > (1000 * 60 * 10)}
-Depth Elapsed Failed            : ${(elapsed) > (1000 * 60 * 10)}
+Trade Elapsed Failed            : ${tradeElapsed > fifteenMinutes}
+Depth Elapsed Failed            : ${(elapsed) > fiveMinutes}
                             `)
                             failed = true;
                             console.log('Socket not working for product ', product)

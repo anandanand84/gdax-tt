@@ -29,6 +29,6 @@ export class RedisBook extends LiveOrderbook implements Orderbook {
     }
 
     processTradeMessage(msg:TradeMessage) {
-        this._book.processTradeMessage(msg);
+        // this._book.processTradeMessage(msg);
     }
 }

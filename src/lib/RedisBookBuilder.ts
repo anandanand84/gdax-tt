@@ -162,14 +162,15 @@ export class RedisBookBuilder extends BookBuilder implements Orderbook {
         // return true;
     }
 
-    processTradeMessage(msg:TradeMessage) {
-        let price = Big(msg.price);
-        let size = Big(msg.size);
-        let value = price.mul(size);
-        let time = msg.time;
-        let side = msg.side;
-        this.redisct.saveTradeMessage({ symbol : this.symbol, time, price, size, value, side})
-    }
+    // processTradeMessage(msg:TradeMessage) {
+    //     let price = Big(msg.price);
+    //     let size = Big(msg.size);
+    //     let value = price.mul(size);
+    //     let time = msg.time;
+    //     let side = msg.side;
+    //     let tradeId = msg.tradeId
+    //     this.redisct.saveTradeMessage({ symbol : this.symbol, time, price, size, value, side, tradeId})
+    // }
 
     /**
      * Changes the size of an existing order to newSize. If the order doesn't exist, returns false.
