@@ -154,9 +154,6 @@ export class RedisBook extends Writable implements RemoteOrderbook {
             //HASH containing respective level bid and ask information size and value
             pipeline.eval(this.DELETE_LUA_SCRIPT, 0, this.PARTIAL_KEY_BOOK_INFO_ASK+'*')
             pipeline.eval(this.DELETE_LUA_SCRIPT, 0, this.PARTIAL_KEY_BOOK_INFO_BID+'*')
-            pipeline.exec().then(()=> {
-                console.log('Cleared REDIS BOOK for product', `${this.exchange}:${this.product}`)
-            });
             // level 3 orders not supported yet
             // this.redisclient.del(`{${EXCHANGE}:${this.product}}:BIDS:*:ORDERS`)
             // this.redisclient.del(`{${EXCHANGE}:${this.product}}:ASKS:*:ORDERS`)
