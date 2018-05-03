@@ -23,6 +23,14 @@ export interface Orderbook {
     sequence: number;
     state(): OrderbookState;
 }
+export interface RemoteOrderbook {
+    getNumAsks(): Promise<number>;
+    getNumBids(): Promise<number>;
+    getBidsTotal(): Promise<BigJS>;
+    getAsksTotal(): Promise<BigJS>;
+    getSequence(): Promise<number>;
+    state(): Promise<OrderbookState>;
+}
 export interface PriceComparable {
     price: BigJS;
 }
