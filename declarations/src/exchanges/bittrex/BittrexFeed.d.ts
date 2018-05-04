@@ -30,6 +30,5 @@ export declare class BittrexFeed extends ExchangeFeed {
     private getSnapshotSequence(product);
     private processMessage(message);
     private updateExchangeState(states);
-    private updateTickers(tickers);
     private processSnapshot(product, state);
 }

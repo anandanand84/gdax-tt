@@ -194,12 +194,7 @@ export class BittrexFeed extends ExchangeFeed {
             case 'updateExchangeState':
                 this.updateExchangeState(message.A as BittrexExchangeState[]);
                 break;
-            case 'updateSummaryState':
-                // const tickers: BittrexTicker[] = message.A[0].Deltas || [];
-                // this.updateTickers(tickers);
-                break;
             default:
-                this.log('debug', `Unknown message type: ${message.M}`);
         }
     }
 
@@ -248,21 +243,6 @@ export class BittrexFeed extends ExchangeFeed {
                 };
                 this.push(message);
             });
-        });
-    }
-
-    private updateTickers(tickers: BittrexTicker[]) {
-        tickers.forEach((bittrexTicker: BittrexTicker) => {
-            const ticker: TickerMessage = {
-                type: 'ticker',
-                productId: BittrexAPI.genericProduct(bittrexTicker.MarketName),
-                bid: Big(bittrexTicker.Bid),
-                ask: Big(bittrexTicker.Ask),
-                time: new Date(bittrexTicker.TimeStamp),
-                price: Big(bittrexTicker.Last),
-                volume: Big(bittrexTicker.Volume)
-            };
-            this.push(ticker);
         });
     }
 
@@ -338,20 +318,4 @@ interface BittrexExchangeState {
     Buys: any[];
     Sells: any[];
     Fills: any[];
-}
-
-interface BittrexTicker {
-    MarketName: string;
-    High: number;
-    Low: number;
-    Volume: number;
-    Last: number;
-    BaseVolume: number;
-    TimeStamp: string;
-    Bid: number;
-    Ask: number;
-    OpenBuyOrders: number;
-    OpenSellOrders: number;
-    PrevDay: number;
-    Created: string;
 }

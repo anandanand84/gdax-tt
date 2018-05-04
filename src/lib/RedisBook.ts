@@ -95,20 +95,20 @@ export class RedisBook extends Writable implements RemoteOrderbook {
     fromState(state: OrderbookState) {
         var pipeline = this.redisclient.pipeline();
         this.clear(pipeline);
+        pipeline.exec().then(()=>{ console.log('Cleared book for ', this.product)})
         this.sequence = state.sequence;
+        var pipeline = this.redisclient.pipeline();
         state.asks.forEach((priceLevel: PriceLevelWithOrders) => {
             const level: AggregatedLevelWithOrders = AggregatedLevelFromPriceLevel(priceLevel);
             this.setLevel('sell', level, pipeline);
         });
+        pipeline.exec().then(()=> { console.log('Ask snapshot updated for ', this.product) })
+        var pipeline = this.redisclient.pipeline();
         state.bids.forEach((priceLevel: PriceLevelWithOrders) => {
             const level: AggregatedLevelWithOrders = AggregatedLevelFromPriceLevel(priceLevel);
             this.setLevel('buy', level, pipeline);
         });
-        pipeline.exec().then((results:any)=> {
-            console.log('++=====================================================', results.length );
-            console.log('Updated snapshot using pipelines total commands executed ', results.length );
-            console.log('++=====================================================', results.length );
-        })
+        pipeline.exec().then(()=> { console.log('Bid snapshot updated for ', this.product) })
     }
 
     constructor(config: RedisBookConfig ) {
