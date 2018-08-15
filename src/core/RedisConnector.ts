@@ -6,7 +6,7 @@ var redisPubsubHost = config.redis.pubsub.host;
 var redisPubsubPort = config.redis.pubsub.port;
 var redisPubsubPassword = config.redis.pubsub.password;
 
-const redis:any = (<any>redisct)(config.redis.cache.host, config.redis.cache.port, config.redis.cache.password);
+const redis:any = (<any>redisct)(config.redis.cache.host, config.redis.cache.port, config.redis.cache.password, config.redis.cache.cluster);
 
 export function getClient() {
     return redis.getRedisClient(); 

@@ -246,13 +246,17 @@ Depth Elapsed Failed            : ${(elapsed) > fiveMinutes}
                     reject('TIMEDOUT');
                 }, 20000)
                 depthSocket.on('pong', (data:any)=> {
-                    if(!resolved) {
-                        console.log('Received pong after connect for ', product);
-                        clearTimeout(timeout);
-                        resolved = true;
-                        resolve(true);
+                    try {
+                        if(!resolved) {
+                            console.log('Received pong after connect for ', product);
+                            clearTimeout(timeout);
+                            resolved = true;
+                            resolve(true);
+                        }
+                        (depthSocket as any).lastPongTime = parseInt(data.toString())
+                    }catch(err) {
+
                     }
-                    (depthSocket as any).lastPongTime = parseInt(data.toString())
                 });
             });
             
@@ -283,7 +287,11 @@ Depth Elapsed Failed            : ${(elapsed) > fiveMinutes}
                 }
             });
             tradesocket.on('pong', (data:any)=> {
-                (tradesocket as any).lastPongTime = parseInt(data.toString());
+                try {
+                    (tradesocket as any).lastPongTime = parseInt(data.toString());
+                }catch(err) {
+
+                }
             })
 
             var tradePromise = new Promise((resolve, reject)=> {
