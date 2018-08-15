@@ -13,6 +13,7 @@
  ***************************************************************************************************************************/
 import { ExchangeFeed, ExchangeFeedConfig } from '../ExchangeFeed';
 export declare class BittrexFeed extends ExchangeFeed {
+    protected handleMessage(msg: string, product?: string): void;
     private client;
     private connection;
     private counters;
@@ -21,14 +22,13 @@ export declare class BittrexFeed extends ExchangeFeed {
     readonly owner: string;
     subscribe(products: string[]): Promise<boolean>;
     protected connect(): Promise<void>;
-    protected handleMessage(msg: any): void;
     protected onOpen(): void;
     protected onClose(code: number, reason: string): void;
     protected close(): void;
     private nextSequence(product);
     private setSnapshotSequence(product, sequence);
     private getSnapshotSequence(product);
-    private processMessage(message);
-    private updateExchangeState(states);
+    private processTradeMessage(data);
+    private updateLevel(states);
     private processSnapshot(product, state);
 }

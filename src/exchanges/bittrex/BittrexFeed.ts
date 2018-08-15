@@ -13,12 +13,14 @@
  ***************************************************************************************************************************/
 
 import { ExchangeFeed, ExchangeFeedConfig } from '../ExchangeFeed';
-import * as Bittrex from 'node-bittrex-api';
 import { LevelMessage, SnapshotMessage, TickerMessage, TradeMessage } from '../../core/Messages';
 import { BittrexAPI } from './BittrexAPI';
 import { Big } from '../../lib/types';
 import { OrderPool } from '../../lib/BookBuilder';
 import { Level3Order, PriceLevelWithOrders } from '../../lib/Orderbook';
+
+const SignalRClient = require('bittrex-client-v2');
+console.log("Using bittrex v2 api");
 
 var wait = async function(time:number) {
     return new Promise((resolve, reject)=> {
@@ -29,6 +31,9 @@ var wait = async function(time:number) {
 var retryCount = process.env.RETRY_COUNT || 1;
 
 export class BittrexFeed extends ExchangeFeed {
+    protected handleMessage(msg: string, product?: string): void {
+        throw new Error("Method not implemented.");
+    }
     private client: any;
     private connection: any;
     private counters: { [product: string]: MessageCounter };
@@ -36,18 +41,7 @@ export class BittrexFeed extends ExchangeFeed {
 
     constructor(config: ExchangeFeedConfig) {
         super(config);
-        const auth = config.auth || { key: 'APIKEY', secret: 'APISECRET' };
-        this.url = config.wsUrl || 'wss://socket.bittrex.com/signalr';
         this.counters = {};
-        Bittrex.options({
-            websockets_baseurl: this.url,
-            apikey: auth.key,
-            apisecret: auth.secret,
-            inverse_callback_arguments: true,
-            stream: false,
-            cleartext: false,
-            verbose: true
-        });
         this.connect();
     }
 
@@ -56,50 +50,30 @@ export class BittrexFeed extends ExchangeFeed {
     }
 
     async subscribe(products: string[]): Promise<boolean> {
-        if (!this.connection) {
-            return false;
-        }
         let index = 1;
         console.log('Subscribe started @ ', new Date())
         for (let product of products) {
-            await wait(300);
-            this.log('info', `Subscribing product ${product} at ${index} of ${products.length}`)
-            index++;
-            await new Promise((resolve, reject) => {
-                this.client.call('CoreHub', 'SubscribeToExchangeDeltas', product).done((err: Error, result: boolean) => {
-                    if (err) {
-                        this.erroredProducts.add(product)
-                        console.log('Error occured');
-                        resolve(false)
-                        return console.error(err);
-                    }
-                    if (result === true) {
-                        this.log('info', `Subscribed to ${product} on ${this.owner}, requesting snaphsot.`);
-                        this.client.call('CoreHub', 'queryExchangeState', product).done((err: Error, data: any) => {
-                            this.log('info', `Snapshot received for ${product} on ${this.owner}`);
-                            const snapshot: SnapshotMessage = this.processSnapshot(product, data);
-                            if(snapshot !== null) {
-                                this.push(snapshot);
-                            }else {
-                                this.erroredProducts.add(product)
-                                console.warn('Null received for snapshot for product ', product, 'raw message', data);
-                            } 
-                            resolve(true)
-                        });
-                    }
-                });
-            });
+            try {
+                await wait(300);
+                this.log('info', `Subscribing product ${product} at ${index} of ${products.length}`)
+                index++;
+                console.log(product);
+                this.client.subscribeToMarkets([product]); //USDT-BTC
+            } catch(err) {
+                this.erroredProducts.add(product);
+            }
         }
         if(this.erroredProducts.size > 0) {
             console.log(`${this.erroredProducts.size} products errored retrying ....`);
             if(retryCount > 0) {
                 retryCount--;
-                this.subscribe(Array.from(this.erroredProducts));
+                var productsToRetry = Array.from(this.erroredProducts);
+                this.erroredProducts.clear();
+                this.subscribe(productsToRetry);
             } else {
                 console.log('No more retry available');
                 console.log('could not subscribe following products ', Array.from(this.erroredProducts))    
             };
-            this.erroredProducts.clear();
         } else {
             console.log('All products subscribed');
             console.log('Subscribe completed @ ', new Date())
@@ -108,45 +82,31 @@ export class BittrexFeed extends ExchangeFeed {
     }
 
     protected async connect() {
-        Bittrex.websockets.client((client:any) => {
-            this.client = client;
-            client.serviceHandlers.messageReceived = (msg: any) => this.handleMessage(msg);
-            client.serviceHandlers.bound = () => this.onNewConnection();
-            client.serviceHandlers.disconnected = (code: number, reason: string) => this.onClose(code, reason);
-            client.serviceHandlers.onerror = (err: Error) => this.onError(err);
-            client.serviceHandlers.connected = (connection: any) => {
-                this.connection = connection;
-                this.emit('websocket-connection');
-            }
-            client.serviceHandlers.connectFailed = function(error:any) { console.log("Websocket connectFailed: ", error); }
-            client.serviceHandlers.bindingError = function (error:any) { console.log("Websocket bindingError: ", error); }
-            client.serviceHandlers.connectionLost = function (error:any) { console.log("Connection Lost: ", error); }
-            client.serviceHandlers.reconnecting = function (retry:any)  {
-                console.log("Websocket Retrying: ", retry);
-                //return retry.count >= 3; // cancel retry true
-                return true;
-            }
-        });
-    }
-
-    protected handleMessage(msg: any): void {
-        if (msg.type !== 'utf8' || !msg.utf8Data) {
-            return;
-        }
-        let data;
         try {
-            data = JSON.parse(msg.utf8Data);
-        } catch (err) {
-            this.log('debug', 'Error parsing feed message', msg.utf8Data);
-            return;
+            this.client = new SignalRClient({
+                pingTimeout:20000,
+                watchdog:{
+                    markets:{
+                        timeout:900000,
+                        reconnect:true
+                    }
+                },
+                useCloudScraper:true
+            });
+            this.client.on('orderBook', (data:any) =>{
+                var snapshot = this.processSnapshot(data.pair, data);
+                this.push(snapshot);
+            });
+            this.client.on('orderBookUpdate', (data:any) =>{
+                this.updateLevel(data);
+            });
+            this.client.on('trades', (data: BittrexFill) =>{
+                this.processTradeMessage(data);
+            });
+            console.log('Connected to signal r');
+        } catch(err) {
+            console.error(err);
         }
-        if (!Array.isArray(data.M)) {
-            return;
-        }
-        this.confirmAlive();
-        data.M.forEach((message: any) => {
-            this.processMessage(message);
-        });
     }
 
     protected onOpen(): void {
@@ -189,17 +149,23 @@ export class BittrexFeed extends ExchangeFeed {
         return counter ? counter.base : -1;
     }
 
-    private processMessage(message: any) {
-        switch (message.M) {
-            case 'updateExchangeState':
-                this.updateExchangeState(message.A as BittrexExchangeState[]);
-                break;
-            default:
-        }
+    private processTradeMessage(data:BittrexFill) {
+        let genericProduct = BittrexAPI.genericProduct(data.pair);
+        data.data.forEach(info => {
+            const message: TradeMessage = {
+                type: 'trade',
+                productId: genericProduct,
+                time: new Date(info.timestamp * 1000),
+                tradeId: info.id.toString(), 
+                price: info.rate.toString(),
+                size: info.quantity.toString(),
+                side: info.orderType.toLowerCase()
+            };
+            this.push(message);       
+        });;
     }
 
-    private updateExchangeState(states: BittrexExchangeState[]) {
-
+    private updateLevel(states: BittrexExchangeState) {
         const createUpdateMessage = (genericProduct: string, side: string, nonce: number, delta: BittrexOrder): LevelMessage => {
             const seq = this.nextSequence(genericProduct);
             const message: LevelMessage = {
@@ -209,71 +175,57 @@ export class BittrexFeed extends ExchangeFeed {
                 sourceSequence: nonce,
                 productId: genericProduct,
                 side: side,
-                price: delta.Rate,
-                size: delta.Quantity,
+                price: delta.rate.toString(),
+                size: delta.action === 'remove' ? '0' : delta.quantity.toString(),
                 count: 1
             };
             return message;
         };
 
-        states.forEach((state: BittrexExchangeState) => {
-            const product = state.MarketName;
-            let genericProduct = BittrexAPI.genericProduct(product);
-            const snaphotSeq = this.getSnapshotSequence(genericProduct);
-            if (state.Nounce <= snaphotSeq) {
-                return;
-            }
-            state.Buys.forEach((delta: BittrexOrder) => {
-                const msg: LevelMessage = createUpdateMessage(genericProduct, 'buy', state.Nounce, delta);
-                this.push(msg);
-            });
-            state.Sells.forEach((delta: BittrexOrder) => {
-                const msg: LevelMessage = createUpdateMessage(genericProduct, 'sell', state.Nounce, delta);
-                this.push(msg);
-            });
-            state.Fills.forEach((fill: BittrexFill, index) => {
-                const message: TradeMessage = {
-                    type: 'trade',
-                    productId: genericProduct,
-                    time: new Date(fill.TimeStamp),
-                    tradeId: state.Nounce+''+index, 
-                    price: fill.Rate,
-                    size: fill.Quantity,
-                    side: fill.OrderType.toLowerCase()
-                };
-                this.push(message);
-            });
+        const product = states.pair;
+        let genericProduct = BittrexAPI.genericProduct(product);
+        const snaphotSeq = this.getSnapshotSequence(genericProduct);
+        if (states.cseq <= snaphotSeq) {
+            return;
+        }
+        states.data.buy.forEach((delta: BittrexOrder) => {
+            const msg: LevelMessage = createUpdateMessage(genericProduct, 'buy', states.cseq, delta);
+            this.push(msg);
+        });
+        states.data.sell.forEach((delta: BittrexOrder) => {
+            const msg: LevelMessage = createUpdateMessage(genericProduct, 'sell', states.cseq, delta);
+            this.push(msg);
         });
     }
 
     private processSnapshot(product: string, state: BittrexExchangeState): SnapshotMessage {
         try {
-            if(state) {
-                let genericProduct = BittrexAPI.genericProduct(product);
+            if(state && state.data) {
+                let genericProduct = BittrexAPI.genericProduct(state.pair);
                 const orders: OrderPool = {};
                 const snapshotMessage: SnapshotMessage = {
                     type: 'snapshot',
                     time: new Date(),
                     productId: genericProduct,
-                    sequence: state.Nounce,
+                    sequence: state.cseq,
                     asks: [],
                     bids: [],
                     orderPool: orders
                 };
-                state.Buys.forEach((order: BittrexOrder) => {
+                state.data.buy.forEach((order: BittrexOrder) => {
                     addOrder(order, 'buy', snapshotMessage.bids);
                 });
-                state.Sells.forEach((order: BittrexOrder) => {
+                state.data.sell.forEach((order: BittrexOrder) => {
                     addOrder(order, 'sell', snapshotMessage.asks);
                 });
-                this.setSnapshotSequence(genericProduct, state.Nounce);
+                this.setSnapshotSequence(genericProduct, state.cseq);
                 return snapshotMessage;
         
                 function addOrder(order: BittrexOrder, side: string, levelArray: PriceLevelWithOrders[]) {
-                    const size = Big(order.Quantity);
+                    const size = Big(order.quantity);
                     const newOrder: Level3Order = {
-                        id: String(order.Rate),
-                        price: Big(order.Rate),
+                        id: String(order.rate),
+                        price: Big(order.rate),
                         size: size,
                         side: side
                     };
@@ -300,22 +252,27 @@ interface MessageCounter {
 }
 
 interface BittrexFill {
-    OrderType: string;
-    Rate: string;
-    Quantity: string;
-    TimeStamp: string;
+    pair : string
+    data : [{
+        id: number,
+        quantity: number,
+        rate: number,
+        orderType: string,
+        timestamp: number
+    }]
 }
 
 interface BittrexOrder {
-    Rate: string;
-    Quantity: string;
-    Type: number;
+    action?:string
+    rate: number;
+    quantity: number;
 }
 
 interface BittrexExchangeState {
-    MarketName: string;
-    Nounce: number;
-    Buys: any[];
-    Sells: any[];
-    Fills: any[];
+    pair: string;
+    cseq: number;
+    data : {
+        buy: BittrexOrder[];
+        sell: BittrexOrder[];
+    }
 }
