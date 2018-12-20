@@ -52,6 +52,12 @@ export class CCXTProductMap {
             case "Gemini":
                 this.exchange  = new ccxt.gemini ()
                 break;
+            case "Bitmex":
+                this.exchange = new ccxt.bitmex()
+                break;
+            case "Hitbtc":
+                this.exchange = new ccxt.hitbtc()
+                break;
             default:
                 console.warn(EXCHANGE + ' Exchange not configured for product map ')
         }

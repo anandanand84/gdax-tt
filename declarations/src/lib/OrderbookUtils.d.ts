@@ -1,4 +1,3 @@
-/// <reference types="bignumber.js" />
 /***************************************************************************************************************************
  * @license                                                                                                                *
  * Copyright 2017 Coinbase, Inc.                                                                                           *
@@ -31,8 +30,8 @@ export interface MarketOrderStats {
  */
 export default class OrderbookUtils {
     static calcFees(fees: BigJS, totalCost: BigJS): {
-        fees_total: BigNumber.BigNumber;
-        total_cost: BigNumber.BigNumber;
+        fees_total: any;
+        total_cost: any;
     };
     private static extractOrders(orders);
     /**
@@ -89,13 +88,13 @@ export default class OrderbookUtils {
      * @param index {number}
      * @param isBuy {boolean}
      */
-    getCumulativeSize(index: number, isBuy: boolean): BigNumber.BigNumber;
+    getCumulativeSize(index: number, isBuy: boolean): any;
     /**
      * Return the cumulative order cost after filling until `index` orders
      * @param index {number}
      * @param isBuy {boolean}
      */
-    getCumulativeCost(index: number, isBuy: boolean): BigNumber.BigNumber;
+    getCumulativeCost(index: number, isBuy: boolean): any;
     /**
      * Calculate the base size that can be bought with total_cost, including fees
      * @param startValue {BigJS} The total value that has already been traded

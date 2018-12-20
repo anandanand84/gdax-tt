@@ -23,6 +23,8 @@ import {
     BitmexMessage, OrderbookSnapshotMessage, OrderbookUpdateMessage, TradeMessage as BitmexTradeMessage,
     TradeData, SubscriptionResponseMessage, PriceData, LevelUpdate,
 } from './BitmexInterfaces';
+import { ProductMap } from '../ProductMap';
+
 
 export class BitmexMarketFeed extends ExchangeFeed {
     readonly owner: string;
@@ -31,6 +33,22 @@ export class BitmexMarketFeed extends ExchangeFeed {
     private orderIdMap: { [orderId: number]: number };
     // BitMEX WSAPI doesn't include a sequence number, so we have to keep track if it ourselves and hope for the best.
     private seq: number;
+
+    static product(genericProduct: string) {
+        return ProductMap.ExchangeMap.get('Bitmex').getExchangeProduct(genericProduct) || genericProduct;
+    }
+
+    static genericProduct(exchangeProduct: string) {
+        return ProductMap.ExchangeMap.get('Bitmex').getGenericProduct(exchangeProduct) || exchangeProduct;
+    }
+
+    static getMarket(genericProduct: string) {
+        return ProductMap.ExchangeMap.get('Bitmex').getMarket(genericProduct);
+    }
+    
+    static getMarketForExchangeProduct(exchangeProduct: string) {
+        return ProductMap.ExchangeMap.get('Bitmex').getMarket(BitmexMarketFeed.genericProduct(exchangeProduct));
+    }
 
     constructor(config: ExchangeFeedConfig) {
         if (!config.wsUrl) {
@@ -43,7 +61,7 @@ export class BitmexMarketFeed extends ExchangeFeed {
         this.connect();
     }
 
-    public subscribe(productIds: string[]) {
+    public async subscribe(productIds: string[]) {
         this.logger.log('debug', `Subscribing to the following symbols: ${JSON.stringify(productIds)}`);
         productIds.forEach((productId: string) => {
             const subscribeMessage = {
@@ -53,6 +71,7 @@ export class BitmexMarketFeed extends ExchangeFeed {
 
             this.send(JSON.stringify(subscribeMessage));
         });
+        return true;
     }
 
     protected onOpen(): void {
@@ -139,7 +158,7 @@ export class BitmexMarketFeed extends ExchangeFeed {
             time: new Date(),
             sequence: 0,
             type: 'snapshot',
-            productId: snapshot.data[0].symbol,
+            productId: BitmexMarketFeed.genericProduct(snapshot.data[0].symbol),
             asks,
             bids,
             orderPool,
@@ -163,7 +182,7 @@ export class BitmexMarketFeed extends ExchangeFeed {
                 time: new Date(),
                 sequence: this.getSeq(),
                 type: 'level',
-                productId: update.symbol,
+                productId: BitmexMarketFeed.genericProduct(update.symbol),
                 price: (price ? price : update.price).toString(),
                 size: update.size ? update.size.toString() : '0',
                 side: update.side.toLowerCase(),
@@ -178,7 +197,7 @@ export class BitmexMarketFeed extends ExchangeFeed {
         trades.data.forEach((trade: TradeData) => {
             const message: TradeMessage = {
                 type: 'trade',
-                productId: trade.symbol,
+                productId: BitmexMarketFeed.genericProduct(trade.symbol),
                 time: new Date(trade.timestamp),
                 tradeId: trade.trdMatchID,
                 price: trade.price.toString(),

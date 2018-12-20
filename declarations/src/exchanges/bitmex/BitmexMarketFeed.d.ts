@@ -17,8 +17,12 @@ export declare class BitmexMarketFeed extends ExchangeFeed {
     readonly feedUrl: string;
     private orderIdMap;
     private seq;
+    static product(genericProduct: string): string;
+    static genericProduct(exchangeProduct: string): string;
+    static getMarket(genericProduct: string): any;
+    static getMarketForExchangeProduct(exchangeProduct: string): any;
     constructor(config: ExchangeFeedConfig);
-    subscribe(productIds: string[]): void;
+    subscribe(productIds: string[]): Promise<boolean>;
     protected onOpen(): void;
     protected handleMessage(rawMsg: string): void;
     /**

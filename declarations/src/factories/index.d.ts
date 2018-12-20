@@ -46,3 +46,7 @@ import * as Binance from './binanceFactories';
 export { Binance };
 import * as Gemini from './geminiFactories';
 export { Gemini };
+import * as Bitmex from './bitmexFactories';
+export { Bitmex };
+import * as Hitbtc from './hitbtcFactories';
+export { Hitbtc };

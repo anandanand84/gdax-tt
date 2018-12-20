@@ -11,59 +11,26 @@
  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the                      *
  * License for the specific language governing permissions and limitations under the License.                              *
  ***************************************************************************************************************************/
-
-/**
- * A collection of convenience methods and provider factories using the most common configurations.
- */
-
-/**
- * Loggers
- */
-
-export { ConsoleLoggerFactory } from '../utils/Logger';
-
-/**
- * FXService
- */
-
-export { SimpleFXServiceFactory, FXProviderFactory } from './fxServiceFactories';
-
-/**
- * GDAX factories
- */
-
-import * as GDAX from './gdaxFactories';
-export  { GDAX };
-
-/**
- * Bitfinex factories
- */
-
-import * as Bitfinex from './bitfinexFactories';
-export  { Bitfinex };
-
-/**
- * Poloniex factories
- */
-
-import * as Poloniex from './poloniexFactories';
-export  { Poloniex };
-
-/**
- * Bittrex factories
- */
-
-import * as Bittrex from './bittrexFactories';
-export  { Bittrex };
-
-import * as Binance from './binanceFactories';
-export  { Binance };
-
-import * as Gemini from './geminiFactories';
-export  { Gemini };
-
-import * as Bitmex from './bitmexFactories';
-export  { Bitmex };
-
-import * as Hitbtc from './hitbtcFactories';
-export  { Hitbtc };
+import { ExchangeFeed, ExchangeFeedConfig } from '../ExchangeFeed';
+export declare class HitbtcMarketFeed extends ExchangeFeed {
+    readonly owner: string;
+    readonly feedUrl: string;
+    private counters;
+    private orderIdMap;
+    private seq;
+    private requestId;
+    static product(genericProduct: string): string;
+    static genericProduct(exchangeProduct: string): string;
+    static getMarket(genericProduct: string): any;
+    static getMarketForExchangeProduct(exchangeProduct: string): any;
+    constructor(config: ExchangeFeedConfig);
+    private nextSequence(product);
+    private setSnapshotSequence(product, sequence);
+    private getSnapshotSequence(product);
+    subscribe(productIds: string[]): Promise<boolean>;
+    protected onOpen(): void;
+    protected handleMessage(rawMsg: string): void;
+    private handleSnapshot(snapshot);
+    private handleOrderbookUpdate(updates);
+    private handleTrade(trades);
+}
