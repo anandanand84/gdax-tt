@@ -9,7 +9,7 @@
     "strictNullChecks": false,
     "experimentalDecorators": true,
     "outDir": "build",
-    "sourceMap": true,
+    "sourceMap": false,
     "declaration": true,
     "declarationDir": "./declarations",
     "allowSyntheticDefaultImports": true 

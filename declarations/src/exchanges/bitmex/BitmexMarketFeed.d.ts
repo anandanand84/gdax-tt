@@ -17,6 +17,7 @@ export declare class BitmexMarketFeed extends ExchangeFeed {
     readonly feedUrl: string;
     private orderIdMap;
     private seq;
+    private productSequences;
     static product(genericProduct: string): string;
     static genericProduct(exchangeProduct: string): string;
     static getMarket(genericProduct: string): any;
@@ -30,6 +31,7 @@ export declare class BitmexMarketFeed extends ExchangeFeed {
      */
     private getSeq();
     private handleSnapshot(snapshot);
+    nextSequence(exchangeSymbol: string): number;
     private handleOrderbookUpdate(updates);
     private handleTrade(trades);
     private handleSubscriptionSuccess(successMsg);

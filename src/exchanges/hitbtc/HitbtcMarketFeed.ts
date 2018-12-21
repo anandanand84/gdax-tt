@@ -58,10 +58,14 @@ export class HitbtcMarketFeed extends ExchangeFeed {
 
     constructor(config: ExchangeFeedConfig) {
         super(config);
+        this.counters = {};
         this.owner = 'Hitbtc';
-        this.feedUrl = config.wsUrl;
+        this.url = `wss://api.hitbtc.com/api/2/ws`;
         this.seq = 0;
         this.connect();
+        setInterval(()=> {
+            this.ping();
+        }, 25 * 1000)
     }
 
     private nextSequence(product: string): number {
@@ -93,6 +97,7 @@ export class HitbtcMarketFeed extends ExchangeFeed {
     public async subscribe(productIds: string[]) {
         this.logger.log('debug', `Subscribing to the following symbols: ${JSON.stringify(productIds)}`);
         productIds.forEach((productId: string) => {
+            this.counters[productId] = { base: -1, offset: 0 };
             const subscribeOrderbookMessage:OrderbookSubscriptionRequestMessage = {
                 method : "subscribeOrderbook",
                 id : this.requestId++,
@@ -141,7 +146,8 @@ export class HitbtcMarketFeed extends ExchangeFeed {
         let sequence = snapshot.params.sequence;
         let exchangeSymbol = snapshot.params.symbol;
         let genericProduct = HitbtcMarketFeed.genericProduct(exchangeSymbol);
-        this.setSnapshotSequence(genericProduct, sequence);
+        console.log('Snapshot Sequence ', sequence);
+        this.setSnapshotSequence(exchangeSymbol, sequence);
         var asks : PriceLevelWithOrders[] = snapshot.params.ask.map((info)=> {
             return PriceLevelFactory(parseFloat(info.price), parseFloat(info.size), 'sell')
         })
@@ -166,12 +172,12 @@ export class HitbtcMarketFeed extends ExchangeFeed {
         let sequence = updates.params.sequence;
         let exchangeSymbol = updates.params.symbol;
         let genericProduct = HitbtcMarketFeed.genericProduct(updates.params.symbol);
-        const seq = this.nextSequence(genericProduct);
-
         updates.params.ask.map((info)=> {
+            const seq = this.nextSequence(exchangeSymbol);
             const message: LevelMessage = {
                 time: new Date(updates.params.timestamp),
-                sequence: sequence,
+                sourceSequence : sequence,
+                sequence: seq,
                 type: 'level',
                 productId : genericProduct,
                 price: (info.price).toString(),
@@ -182,9 +188,11 @@ export class HitbtcMarketFeed extends ExchangeFeed {
             this.push(message);
         });
         updates.params.bid.map((info)=> {
+            const seq = this.nextSequence(exchangeSymbol);
             const message: LevelMessage = {
                 time: new Date(updates.params.timestamp),
-                sequence: sequence,
+                sourceSequence : sequence,
+                sequence: seq,
                 type: 'level',
                 productId : genericProduct,
                 price: (info.price).toString(),

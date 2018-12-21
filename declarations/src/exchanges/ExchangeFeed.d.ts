@@ -42,6 +42,7 @@ export declare abstract class ExchangeFeed extends Readable {
     reconnect(delay: number): void;
     disconnect(): void;
     protected connect(products?: string[]): void;
+    protected ping(): void;
     protected getWebsocketUrlForProduct(product: string): string;
     protected killProcess(msg: any): void;
     protected readonly abstract owner: string;

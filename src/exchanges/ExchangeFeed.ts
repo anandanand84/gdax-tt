@@ -112,10 +112,20 @@ export abstract class ExchangeFeed extends Readable {
         socket.on('open', () => this.onNewConnection());
         socket.on('close', (code: number, reason: string) => this.onClose(code, reason));
         socket.on('error', (err: Error) => this.onError(err));
+        socket.on('pong', ()=> this.confirmAlive());
         socket.on('connection', () => { this.emit('websocket-connection'); });
         this.socket = socket;
         this.lastHeartBeat = -1;
-        this.connectionChecker = setInterval(() => this.checkConnection(30 * 1000), 5 * 1000);
+        console.log('Setting up connection checker every 5 sec');
+        this.connectionChecker = setInterval(() => {
+            this.checkConnection(60 * 1000)
+        }, 5 * 1000);
+    }
+
+    protected ping() {
+        if(this.socket && this.socket.readyState === this.socket.OPEN) {
+            this.socket.ping();
+        }
     }
 
     protected getWebsocketUrlForProduct(product:string):string {

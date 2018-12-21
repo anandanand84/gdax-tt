@@ -30,9 +30,11 @@ export class BitmexMarketFeed extends ExchangeFeed {
     readonly owner: string;
     readonly feedUrl: string;
     // Maps order IDs to the price that they exist at
-    private orderIdMap: { [orderId: number]: number };
+    private orderIdMap: Map<string, { [orderId: number]: number }>;
     // BitMEX WSAPI doesn't include a sequence number, so we have to keep track if it ourselves and hope for the best.
     private seq: number;
+
+    private productSequences: { [exchangeProduct :string] : number};
 
     static product(genericProduct: string) {
         return ProductMap.ExchangeMap.get('Bitmex').getExchangeProduct(genericProduct) || genericProduct;
@@ -59,16 +61,20 @@ export class BitmexMarketFeed extends ExchangeFeed {
         this.feedUrl = config.wsUrl;
         this.seq = 0;
         this.connect();
+        setInterval(()=> {
+            this.ping();
+        }, 25 * 1000)
     }
 
     public async subscribe(productIds: string[]) {
+        this.productSequences = {};
         this.logger.log('debug', `Subscribing to the following symbols: ${JSON.stringify(productIds)}`);
         productIds.forEach((productId: string) => {
+            this.productSequences[productId] = -1;
             const subscribeMessage = {
                 op: 'subscribe',
                 args: [`orderBookL2:${productId}`, `trade:${productId}`],
             };
-
             this.send(JSON.stringify(subscribeMessage));
         });
         return true;
@@ -130,7 +136,9 @@ export class BitmexMarketFeed extends ExchangeFeed {
     private handleSnapshot(snapshot: OrderbookSnapshotMessage) {
         // (re)initialize our order id map
         const newIdMap = snapshot.data.reduce((acc, { id, price }) => ({...acc, [id]: price }), {});
-        this.orderIdMap = newIdMap;
+        var orderIdMap = new Map();
+        var exchangeSymbol = snapshot.data[0].symbol;
+        this.orderIdMap = orderIdMap.set(exchangeSymbol, newIdMap);
 
         const mapLevelUpdates: (date: PriceData) => PriceLevelWithOrders =
             ({ id, price, size, side }) => PriceLevelFactory(price, size, side.toLowerCase());
@@ -153,12 +161,12 @@ export class BitmexMarketFeed extends ExchangeFeed {
             ...acc,
             [ pd.id.toString() ]: priceDataToLvl3(pd),
         }), {});
-
+        this.productSequences[exchangeSymbol] = 0;
         const snapshotMsg: SnapshotMessage = {
             time: new Date(),
             sequence: 0,
             type: 'snapshot',
-            productId: BitmexMarketFeed.genericProduct(snapshot.data[0].symbol),
+            productId: BitmexMarketFeed.genericProduct(exchangeSymbol),
             asks,
             bids,
             orderPool,
@@ -167,20 +175,27 @@ export class BitmexMarketFeed extends ExchangeFeed {
         this.push(snapshotMsg);
     }
 
+    nextSequence(exchangeSymbol:string) {
+        this.productSequences[exchangeSymbol] = this.productSequences[exchangeSymbol]+1;
+        return this.productSequences[exchangeSymbol]
+    }
+
     private handleOrderbookUpdate(updates: OrderbookUpdateMessage) {
         updates.data.forEach((update: LevelUpdate) => {
-            const price: number = this.orderIdMap[update.id];
+            var orderMap = this.orderIdMap.get(update.symbol);
+            if(!orderMap) return;
+            const price: number = orderMap[update.id];
             if (update.price) {
                 // insert
-                this.orderIdMap[update.id] = update.price;
+                this.orderIdMap.get(update.symbol)[update.id] = update.price;
             } else if (!update.size) {
                 // delete
-                delete this.orderIdMap[update.id];
+                delete this.orderIdMap.get(update.symbol)[update.id];
             }
 
             const message: LevelMessage = {
                 time: new Date(),
-                sequence: this.getSeq(),
+                sequence: this.nextSequence(update.symbol),
                 type: 'level',
                 productId: BitmexMarketFeed.genericProduct(update.symbol),
                 price: (price ? price : update.price).toString(),
