@@ -13,6 +13,7 @@
  ***************************************************************************************************************************/
 
 import { Big, big, BigJS, Biglike, ONE, ZERO } from './types';
+import * as BigNumber from 'bignumber.js';
 
 export default class BigArray {
     static copy(a: BigArray) {

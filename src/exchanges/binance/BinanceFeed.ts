@@ -326,10 +326,10 @@ Depth Elapsed Failed            : ${(elapsed) > fiveMinutes}
     }
 
     private fetchSnapshotForProduct(product:string) {
-        request(`https://www.binance.com/api/v1/depth?symbol=${product.toUpperCase()}&limit=1000`, { json : true }).then((depthSnapshot) => {
+        request(`https://www.binance.com/api/v1/depth?symbol=${product.toUpperCase()}&limit=1000`, { json : true }).then((depthSnapshot:any) => {
                 console.log ('Received Snapshot ', product);
                 this.handleSnapshotMessage(depthSnapshot, product);
-            }).catch((err)=> {
+            }).catch((err:any)=> {
                 if(err.statusCode == 418) {
                     underBan = true;
                     var currentTime = Date.now();

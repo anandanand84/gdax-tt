@@ -10,7 +10,7 @@ import CoinMarketCapProvider from '../FXService/providers/CoinMarketCapProvider'
  * @param logger {Logger} An existing logger object.
  * @constructor
  */
-export declare function FXProviderFactory(provider: string, logger: Logger): CoinMarketCapProvider | OpenExchangeProvider | YahooFinanceFXProvider;
+export declare function FXProviderFactory(provider: string, logger: Logger): YahooFinanceFXProvider | OpenExchangeProvider | CoinMarketCapProvider;
 /**
  * Generate an return an FXService provider with sane defaults. If no arguments are specified, Yahoo Finance is used
  * as the sole provider using a SimpleRateCalculator instance.

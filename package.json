@@ -70,6 +70,7 @@
     "ws": "1.1.1"
   },
   "devDependencies": {
+    "@types/bluebird": "3.5.5",
     "@types/ioredis": "0.0.25",
     "@types/request-promise": "4.1.40",
     "babel-preset-es2015": "^6.24.1",

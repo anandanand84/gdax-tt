@@ -15,6 +15,7 @@
 import { Big, BigJS, Biglike, ONE, ZERO } from './types';
 import { OrderbookState, PriceLevel } from './Orderbook';
 import BigArray from './BigArray';
+import * as BigNumber from 'bignumber.js';
 
 export interface MarketOrderStats {
     first_price: BigJS;

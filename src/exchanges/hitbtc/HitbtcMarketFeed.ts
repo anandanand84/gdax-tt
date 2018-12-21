@@ -53,7 +53,7 @@ export class HitbtcMarketFeed extends ExchangeFeed {
     }
     
     static getMarketForExchangeProduct(exchangeProduct: string) {
-        return ProductMap.ExchangeMap.get('Hitbtc').getMarket(HitbtcFeed.genericProduct(exchangeProduct));
+        return ProductMap.ExchangeMap.get('Hitbtc').getMarket(HitbtcMarketFeed.genericProduct(exchangeProduct));
     }
 
     constructor(config: ExchangeFeedConfig) {
@@ -140,7 +140,7 @@ export class HitbtcMarketFeed extends ExchangeFeed {
         // (re)initialize our order id map
         let sequence = snapshot.params.sequence;
         let exchangeSymbol = snapshot.params.symbol;
-        let genericProduct = HitbtcFeed.genericProduct(exchangeSymbol);
+        let genericProduct = HitbtcMarketFeed.genericProduct(exchangeSymbol);
         this.setSnapshotSequence(genericProduct, sequence);
         var asks : PriceLevelWithOrders[] = snapshot.params.ask.map((info)=> {
             return PriceLevelFactory(parseFloat(info.price), parseFloat(info.size), 'sell')
@@ -165,7 +165,7 @@ export class HitbtcMarketFeed extends ExchangeFeed {
     private handleOrderbookUpdate(updates: OrderbookResponseMessage) {
         let sequence = updates.params.sequence;
         let exchangeSymbol = updates.params.symbol;
-        let genericProduct = HitbtcFeed.genericProduct(updates.params.symbol);
+        let genericProduct = HitbtcMarketFeed.genericProduct(updates.params.symbol);
         const seq = this.nextSequence(genericProduct);
 
         updates.params.ask.map((info)=> {
@@ -200,7 +200,7 @@ export class HitbtcMarketFeed extends ExchangeFeed {
         trades.params.data.forEach((trade: HitbtcTradeMessage) => {
             const message: TradeMessage = {
                 type: 'trade',
-                productId: HitbtcFeed.genericProduct(trades.params.symbol),
+                productId: HitbtcMarketFeed.genericProduct(trades.params.symbol),
                 time: new Date(trade.timestamp),
                 tradeId: trade.id.toString(),
                 price: trade.price.toString(),
