@@ -12,7 +12,7 @@
  * License for the specific language governing permissions and limitations under the License.                              *
  ***************************************************************************************************************************/
 import { ProductMap } from '../exchanges/ProductMap';
-import { HitbtcMarketFeed } from '../exchanges/Hitbtc/HitbtcMarketFeed';
+import { HitbtcMarketFeed } from '../exchanges/hitbtc/HitbtcMarketFeed';
 import { ExchangeAuthConfig } from '../exchanges/AuthConfig';
 import { Logger } from '../utils/Logger';
 import { getFeed, ExchangeFeedConfig } from '../exchanges/ExchangeFeed';
