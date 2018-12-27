@@ -96,7 +96,9 @@ export class HitbtcMarketFeed extends ExchangeFeed {
 
     public async subscribe(productIds: string[]) {
         this.logger.log('debug', `Subscribing to the following symbols: ${JSON.stringify(productIds)}`);
-        productIds.forEach((productId: string) => {
+        var totalCount = productIds.length;
+        var count = 0;
+        for (const productId of productIds) {
             this.counters[productId] = { base: -1, offset: 0 };
             const subscribeOrderbookMessage:OrderbookSubscriptionRequestMessage = {
                 method : "subscribeOrderbook",
@@ -115,7 +117,9 @@ export class HitbtcMarketFeed extends ExchangeFeed {
             };
             this.send(JSON.stringify(subscribeOrderbookMessage));
             this.send(JSON.stringify(subscribeTradebookMessage));
-        });
+            await new Promise((resolve, reject)=> { setTimeout(resolve, 750) })
+            this.logger.log('debug', `completed ${count++} of ${totalCount}`);
+        }
         return true;
     }
 
@@ -146,7 +150,6 @@ export class HitbtcMarketFeed extends ExchangeFeed {
         let sequence = snapshot.params.sequence;
         let exchangeSymbol = snapshot.params.symbol;
         let genericProduct = HitbtcMarketFeed.genericProduct(exchangeSymbol);
-        console.log('Snapshot Sequence ', sequence);
         this.setSnapshotSequence(exchangeSymbol, sequence);
         var asks : PriceLevelWithOrders[] = snapshot.params.ask.map((info)=> {
             return PriceLevelFactory(parseFloat(info.price), parseFloat(info.size), 'sell')
