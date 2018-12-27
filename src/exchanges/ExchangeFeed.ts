@@ -100,7 +100,7 @@ export abstract class ExchangeFeed extends Readable {
                     this.handleMessage(msg, product)
                 });
                 socket.on('close', this.killProcess);
-                socket.on('error', this.killProcess);
+                socket.on('error', ()=> this.killProcess(null, null));
                 this.sockets.push(socket);
                 this.lastHeartBeat = -1;
             })
@@ -132,8 +132,10 @@ export abstract class ExchangeFeed extends Readable {
         throw('implement in subclass');
     }
 
-    protected killProcess(msg:any) {
-        console.error(msg);
+    protected killProcess(code:any, message:any) {
+        console.error("Socket error or close ");
+        console.error("code :", code);
+        console.error("Message :", message);
         process.exit(1);
     }
 
