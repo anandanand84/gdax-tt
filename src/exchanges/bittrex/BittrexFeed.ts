@@ -237,8 +237,8 @@ export class BittrexFeed extends ExchangeFeed {
                     productId: genericProduct,
                     time: new Date(fill.TimeStamp),
                     tradeId: state.Nounce+''+index, 
-                    price: fill.Rate,
-                    size: fill.Quantity,
+                    price: fill.Rate.toString(),
+                    size: fill.Quantity.toString(),
                     side: fill.OrderType.toLowerCase()
                 };
                 this.push(message);
